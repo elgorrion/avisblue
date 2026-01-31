@@ -6,19 +6,29 @@ set -euo pipefail
 
 echo "=== Purging GTK applications for pure KDE ==="
 
-# GTK4/libadwaita Flatpaks to remove
+# GTK Flatpaks to remove
 GTK_FLATPAKS=(
+    "org.mozilla.firefox"             # GTK3 - user installs preferred browser
     "com.vysp3r.ProtonPlus"           # GTK4 - replace with ProtonUp-Qt
     "com.ranfdev.DistroShelf"         # GTK4 - replace with BoxBuddy or CLI
     "io.github.flattool.Warehouse"    # GTK4 - use Discover instead
     "com.github.tchx84.Flatseal"      # GTK4 - no Qt equivalent, remove
 )
 
-echo "Removing GTK4/libadwaita Flatpaks..."
+# GTK RPM packages to remove
+GTK_RPMS=(
+    "lutris"                          # GTK3 - no Qt alternative, remove entirely
+)
+
+echo "Removing GTK Flatpaks..."
 for app in "${GTK_FLATPAKS[@]}"; do
     echo "  Removing: $app"
     flatpak uninstall --system -y "$app" 2>/dev/null || true
 done
+
+echo ""
+echo "Removing GTK RPM packages..."
+dnf5 -y remove ${GTK_RPMS[@]} || true
 
 # Install Qt alternatives
 echo ""
@@ -39,6 +49,10 @@ flatpak install --system -y flathub io.github.dvlv.boxbuddyrs || true
 
 echo ""
 echo "=== GTK cleanup summary ==="
+echo "REMOVED (GTK3):"
+echo "  - Firefox (browser - user installs preferred)"
+echo "  - Lutris (game launcher - use Steam/Heroic instead)"
+echo ""
 echo "REMOVED (GTK4/libadwaita):"
 echo "  - ProtonPlus (Proton manager)"
 echo "  - DistroShelf (Distrobox GUI)"
@@ -52,10 +66,10 @@ echo ""
 echo "USE INSTEAD:"
 echo "  - Discover for Flatpak management (built-in)"
 echo "  - 'flatpak override' CLI for permissions"
+echo "  - Falkon/Chromium for browsing (install via Flatpak)"
+echo "  - Steam for non-Steam games (add as non-Steam game)"
 echo ""
-echo "KEPT (no Qt alternative):"
-echo "  - Firefox (GTK3, works fine on KDE)"
-echo "  - Lutris (GTK3, no alternative exists)"
+echo "REMAINING GTK (unavoidable):"
 echo "  - Protontricks (GTK3 Zenity dialogs, CLI primary)"
 echo ""
 echo "=== Pure KDE goal achieved ==="

@@ -23,8 +23,7 @@ dnf5 -y install \
 # Create openrgb group if not exists
 getent group openrgb || groupadd openrgb
 
-# Install ProtonUp-Qt via Flatpak
-echo "Installing ProtonUp-Qt..."
-flatpak install -y flathub net.davidotek.pupgui2 || true
+# Note: ProtonUp-Qt is already pre-installed in Bazzite KDE images
+# No need to install it here
 
 echo "=== Gaming role complete ==="

@@ -23,7 +23,6 @@ dnf5 -y install \
 # Create openrgb group if not exists
 getent group openrgb || groupadd openrgb
 
-# Note: ProtonUp-Qt is already pre-installed in Bazzite KDE images
-# No need to install it here
+# Note: ProtonUp-Qt is installed by purge-gtk.sh (replaces Bazzite's ProtonPlus)
 
 echo "=== Gaming role complete ==="

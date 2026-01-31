@@ -30,6 +30,11 @@ RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     /ctx/build_files/shared/setup-browsers.sh
 
+# Purge GTK apps, install Qt alternatives (pure KDE goal)
+RUN --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    /ctx/build_files/shared/purge-gtk.sh
+
 # Add Aurora KDE apps
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \

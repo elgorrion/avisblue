@@ -9,6 +9,7 @@ echo "=== Purging GTK applications for pure KDE ==="
 # GTK Flatpaks to remove
 GTK_FLATPAKS=(
     "org.mozilla.firefox"             # GTK3 - user installs preferred browser
+    "com.github.Matoking.protontricks" # GTK3 - rarely needed, install if required
     "com.vysp3r.ProtonPlus"           # GTK4 - replace with ProtonUp-Qt
     "com.ranfdev.DistroShelf"         # GTK4 - replace with BoxBuddy or CLI
     "io.github.flattool.Warehouse"    # GTK4 - use Discover instead
@@ -52,6 +53,7 @@ echo "=== GTK cleanup summary ==="
 echo "REMOVED (GTK3):"
 echo "  - Firefox (browser - user installs preferred)"
 echo "  - Lutris (game launcher - use Steam/Heroic instead)"
+echo "  - Protontricks (rarely needed - install if required)"
 echo ""
 echo "REMOVED (GTK4/libadwaita):"
 echo "  - ProtonPlus (Proton manager)"
@@ -69,7 +71,4 @@ echo "  - 'flatpak override' CLI for permissions"
 echo "  - Falkon/Chromium for browsing (install via Flatpak)"
 echo "  - Steam for non-Steam games (add as non-Steam game)"
 echo ""
-echo "REMAINING GTK (unavoidable):"
-echo "  - Protontricks (GTK3 Zenity dialogs, CLI primary)"
-echo ""
-echo "=== Pure KDE goal achieved ==="
+echo "=== 100% Pure KDE achieved - zero GTK apps ==="

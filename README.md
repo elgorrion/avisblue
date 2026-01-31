@@ -4,12 +4,10 @@ Custom [Universal Blue](https://universal-blue.org/) distro for CASA fleet, base
 
 ## Images
 
-| Image | Base | Target | Features |
-|-------|------|--------|----------|
-| `avisblue-main` | Bazzite (Mesa) | enviada-nb | KDE, Tailscale, Homebrew |
-| `avisblue-main-dev` | avisblue-main | btecnb-vona | + VSCode, ROCm, containers |
-| `avisblue-nvidia-gaming` | Bazzite-NVIDIA | wueesixx-pc | + Steam, Lutris, OpenRGB |
-| `avisblue-nvidia-gaming-dev` | nvidia-gaming | elgorrion-pc | + VSCode, CUDA, containers |
+| Image | Base | Targets | Features |
+|-------|------|---------|----------|
+| `avisblue-main` | Bazzite (Mesa) | enviada-nb, btecnb-vona | Dev + ROCm |
+| `avisblue-nvidia-gaming` | Bazzite-NVIDIA | wueesixx-pc, elgorrion-pc | Gaming + Dev + CUDA |
 
 ## Installation
 
@@ -20,7 +18,7 @@ Download ISO from [Releases](https://github.com/elgorrion/avisblue/releases) and
 ### Rebase from Fedora Atomic
 
 ```bash
-# For AMD/Intel GPU (Mesa)
+# For AMD/Intel GPU
 sudo bootc switch ghcr.io/elgorrion/avisblue-main:latest
 
 # For NVIDIA GPU + Gaming
@@ -33,55 +31,70 @@ sudo bootc switch ghcr.io/elgorrion/avisblue-nvidia-gaming:latest
 # 1. Connect to fleet
 sudo tailscale up --accept-routes --operator=$USER
 
-# 2. Install Chrome (optional, Firefox is pre-installed)
-flatpak install flathub com.google.Chrome
-
-# 3. Install Homebrew packages
+# 2. Install Homebrew packages
 brew install chezmoi starship direnv
 brew install bat eza fd ripgrep git-delta gh glab fzf
 
-# 4. Apply dotfiles
+# 3. Apply dotfiles
 chezmoi init --apply --ssh elgorrion
 
-# 5. Install Claude Code (dev machines only)
+# 4. Install Claude Code
 curl -fsSL https://claude.ai/install.sh | sh
 ```
 
-## Core Features
+## What's Included
 
-All images include:
-- Bazzite kernel (HDR, winesync, LAVD/BORE schedulers)
-- KDE Plasma 6 + Valve's SteamOS themes
-- Firefox (pre-installed), Chrome (via Flathub)
-- Tailscale
-- Homebrew
-- Distrobox
-- Auto-updates
+### Both Images
+
+| Category | Packages |
+|----------|----------|
+| KDE Apps | kate, okular, gwenview, ark, kcalc, spectacle, partitionmanager, kdeconnectd |
+| Dev Tools | VSCode, podman-docker, docker-compose, qemu-kvm, libvirt, virt-manager |
+| System | Bazzite kernel (HDR, winesync), Tailscale, Homebrew, Distrobox |
+
+### avisblue-main (Mesa)
+
+- ROCm for AMD compute (rocm-hip, rocm-opencl, rocm-smi)
+- No gaming packages (stripped)
+- Zero Flatpaks
+
+### avisblue-nvidia-gaming (NVIDIA)
+
+- Gaming: Steam, Gamescope, MangoHud, vkBasalt (from Bazzite)
+- Gaming extras: OpenRGB
+- CUDA: nvidia-container-toolkit
+- Flatpaks: ProtonUp-Qt, BoxBuddy (Qt only)
 
 ## Building Locally
 
 ```bash
-# Install just
-brew install just
+# Build main
+podman build -f Containerfile.main -t avisblue-main:local .
 
-# Build all images
-just build-all
-
-# Build specific image
-just build-main
-just build-nvidia-gaming
+# Build nvidia-gaming
+podman build -f Containerfile.nvidia-gaming -t avisblue-nvidia-gaming:local .
 ```
 
 ## Architecture
 
 ```
 Bazzite (upstream)
-    │
-    ├── avisblue-main (Mesa)
-    │   └── avisblue-main-dev (+VSCode, +ROCm)
-    │
-    └── avisblue-nvidia-gaming (NVIDIA + Gaming)
-        └── avisblue-nvidia-gaming-dev (+VSCode, +CUDA)
+├── avisblue-main
+│   ├── Strip gaming/handheld
+│   ├── Strip ALL Flatpaks
+│   ├── Fleet config
+│   ├── KDE apps (RPMs)
+│   ├── Dev tools
+│   └── ROCm
+│
+└── avisblue-nvidia-gaming
+    ├── Strip handheld (keep gaming)
+    ├── Strip ALL Flatpaks
+    ├── Fleet config
+    ├── KDE apps (RPMs)
+    ├── Dev tools
+    ├── Gaming extras
+    └── CUDA
 ```
 
 ## License

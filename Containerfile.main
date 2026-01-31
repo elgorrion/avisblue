@@ -1,9 +1,8 @@
-# avisblue-main: Mesa (AMD/Intel) base image
-# Target: enviada-nb (family laptop)
+# avisblue-main: Mesa + Dev + ROCm
+# Targets: enviada-nb, btecnb-vona
 #
-# Based on Bazzite, stripped of gaming packages, with fleet config added.
+# Based on Bazzite, stripped of gaming/handheld, with dev tools added.
 
-ARG FEDORA_VERSION="${FEDORA_VERSION:-43}"
 ARG BASE_IMAGE="ghcr.io/ublue-os/bazzite:stable"
 
 FROM ${BASE_IMAGE}
@@ -15,40 +14,37 @@ ARG IMAGE_VENDOR="elgorrion"
 COPY build_files /ctx/build_files
 COPY system_files /
 
-# Strip gaming/handheld packages from Bazzite
+# 1. Strip gaming/handheld packages from Bazzite
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     /ctx/build_files/shared/strip-bazzite.sh
 
-# Apply fleet configuration (locale, SSH, etc.)
+# 2. Strip ALL Flatpaks (use RPMs instead)
+RUN --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    /ctx/build_files/shared/strip-flatpaks.sh
+
+# 3. Apply fleet configuration (locale, SSH, Tailscale)
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     /ctx/build_files/shared/fleet-config.sh
 
-# Setup browsers (Flathub for Chrome, Firefox already included)
+# 4. Install KDE apps (RPMs)
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
-    /ctx/build_files/shared/setup-browsers.sh
+    /ctx/build_files/shared/kde-apps.sh
 
-# Purge GTK apps, install Qt alternatives (pure KDE goal)
+# 5. Install dev tools (VSCode, podman, libvirt)
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
-    /ctx/build_files/shared/purge-gtk.sh
+    /ctx/build_files/shared/dev-tools.sh
 
-# Add Aurora KDE apps
+# 6. Install ROCm for AMD compute
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
-    dnf5 -y install \
-        kate \
-        okular \
-        gwenview \
-        ark \
-        kcalc \
-        spectacle \
-        partitionmanager \
-        kdeconnectd
+    /ctx/build_files/roles/rocm.sh
 
-# Finalize image
+# 7. Finalize image
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     /ctx/build_files/shared/finalize.sh
@@ -56,4 +52,4 @@ RUN --mount=type=cache,dst=/var/cache \
 # Image metadata
 LABEL org.opencontainers.image.title="${IMAGE_NAME}"
 LABEL org.opencontainers.image.vendor="${IMAGE_VENDOR}"
-LABEL org.opencontainers.image.description="Avisblue main image - Mesa/AMD/Intel base for CASA fleet"
+LABEL org.opencontainers.image.description="Avisblue main - Mesa + Dev + ROCm for CASA fleet"

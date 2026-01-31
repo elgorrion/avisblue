@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
-# gaming.sh - Gaming role packages
-# Adds OpenRGB and any gaming extras not in base Bazzite
+# gaming.sh - Gaming extras for NVIDIA gaming image
+# OpenRGB, ProtonUp-Qt, BoxBuddy
 
 set -euo pipefail
 
-echo "=== Installing gaming role packages ==="
+echo "=== Installing gaming extras ==="
 
-# Note: Steam, Lutris, Gamescope, MangoHud, etc. are already in Bazzite-NVIDIA
-# This script adds extras like OpenRGB
+# Note: Steam, Gamescope, MangoHud, vkBasalt already in Bazzite-NVIDIA
 
-# Enable OpenRGB COPR (if not already enabled by Bazzite)
+# Enable OpenRGB COPR
 echo "Enabling OpenRGB repository..."
 dnf5 -y copr enable kylegospo/openrgb || true
 
@@ -19,10 +18,12 @@ dnf5 -y install \
     openrgb \
     openrgb-udev-rules
 
-# Ensure user can access i2c for OpenRGB
-# Create openrgb group if not exists
+# Create openrgb group for i2c access
 getent group openrgb || groupadd openrgb
 
-# Note: ProtonUp-Qt is installed by purge-gtk.sh (replaces Bazzite's ProtonPlus)
+# Install Qt Flatpaks for gaming management
+echo "Installing ProtonUp-Qt and BoxBuddy..."
+flatpak install --system -y flathub net.davidotek.pupgui2 || true
+flatpak install --system -y flathub io.github.dvlv.boxbuddyrs || true
 
-echo "=== Gaming role complete ==="
+echo "=== Gaming extras complete ==="

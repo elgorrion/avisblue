@@ -1,9 +1,8 @@
-# avisblue-nvidia-gaming: NVIDIA + Gaming
-# Target: wueesixx-pc (gaming workstation)
+# avisblue-nvidia-gaming: NVIDIA + Gaming + Dev + CUDA
+# Targets: wueesixx-pc, elgorrion-pc
 #
-# Based on Bazzite-NVIDIA, stripped of handheld packages, gaming re-added.
+# Based on Bazzite-NVIDIA, stripped of handheld, with dev tools added.
 
-ARG FEDORA_VERSION="${FEDORA_VERSION:-43}"
 ARG BASE_IMAGE="ghcr.io/ublue-os/bazzite-nvidia:stable"
 
 FROM ${BASE_IMAGE}
@@ -15,45 +14,42 @@ ARG IMAGE_VENDOR="elgorrion"
 COPY build_files /ctx/build_files
 COPY system_files /
 
-# Strip handheld/HTPC packages (keep gaming packages)
+# 1. Strip handheld/HTPC packages (keep gaming)
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     /ctx/build_files/shared/strip-bazzite-handheld.sh
 
-# Apply fleet configuration (locale, SSH, etc.)
+# 2. Strip ALL Flatpaks (use RPMs instead)
+RUN --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    /ctx/build_files/shared/strip-flatpaks.sh
+
+# 3. Apply fleet configuration (locale, SSH, Tailscale)
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     /ctx/build_files/shared/fleet-config.sh
 
-# Setup browsers (Flathub for Chrome, Firefox already included)
+# 4. Install KDE apps (RPMs)
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
-    /ctx/build_files/shared/setup-browsers.sh
+    /ctx/build_files/shared/kde-apps.sh
 
-# Purge GTK apps, install Qt alternatives (pure KDE goal)
+# 5. Install dev tools (VSCode, podman, libvirt)
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
-    /ctx/build_files/shared/purge-gtk.sh
+    /ctx/build_files/shared/dev-tools.sh
 
-# Add Aurora KDE apps
-RUN --mount=type=cache,dst=/var/cache \
-    --mount=type=cache,dst=/var/log \
-    dnf5 -y install \
-        kate \
-        okular \
-        gwenview \
-        ark \
-        kcalc \
-        spectacle \
-        partitionmanager \
-        kdeconnectd
-
-# Add gaming extras (OpenRGB)
+# 6. Install gaming extras (OpenRGB, ProtonUp-Qt)
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     /ctx/build_files/roles/gaming.sh
 
-# Finalize image
+# 7. Install CUDA for NVIDIA compute
+RUN --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    /ctx/build_files/roles/cuda.sh
+
+# 8. Finalize image
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     /ctx/build_files/shared/finalize.sh
@@ -61,4 +57,4 @@ RUN --mount=type=cache,dst=/var/cache \
 # Image metadata
 LABEL org.opencontainers.image.title="${IMAGE_NAME}"
 LABEL org.opencontainers.image.vendor="${IMAGE_VENDOR}"
-LABEL org.opencontainers.image.description="Avisblue nvidia-gaming image - NVIDIA + Gaming for CASA fleet"
+LABEL org.opencontainers.image.description="Avisblue nvidia-gaming - NVIDIA + Gaming + Dev + CUDA for CASA fleet"

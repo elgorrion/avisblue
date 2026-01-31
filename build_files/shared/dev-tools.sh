@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# dev.sh - Development role packages
-# Adds VSCode, container support, virtualization
+# dev-tools.sh - Development tools for all images
+# VSCode, containers, virtualization
 
 set -euo pipefail
 
-echo "=== Installing dev role packages ==="
+echo "=== Installing dev tools ==="
 
-# Add Microsoft VSCode repository
-echo "Adding Microsoft VSCode repository..."
+# Microsoft VSCode repository
+echo "Adding VSCode repository..."
 rpm --import https://packages.microsoft.com/keys/microsoft.asc
 cat > /etc/yum.repos.d/vscode.repo << 'EOF'
 [code]
@@ -22,7 +22,7 @@ EOF
 echo "Installing VSCode..."
 dnf5 -y install code
 
-# Install container and virtualization tools
+# Container and virtualization tools
 echo "Installing container/virtualization tools..."
 dnf5 -y install \
     podman-docker \
@@ -36,7 +36,4 @@ dnf5 -y install \
 echo "Enabling libvirtd..."
 systemctl enable libvirtd.socket || true
 
-# Note: Claude Code is installed by user via:
-# curl -fsSL https://claude.ai/install.sh | sh
-
-echo "=== Dev role complete ==="
+echo "=== Dev tools complete ==="

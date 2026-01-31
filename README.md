@@ -6,7 +6,7 @@ Custom [Universal Blue](https://universal-blue.org/) distro for CASA fleet, base
 
 | Image | Base | Target | Features |
 |-------|------|--------|----------|
-| `avisblue-main` | Bazzite (Mesa) | enviada-nb | KDE, Chrome, Tailscale, Homebrew |
+| `avisblue-main` | Bazzite (Mesa) | enviada-nb | KDE, Tailscale, Homebrew |
 | `avisblue-main-dev` | avisblue-main | btecnb-vona | + VSCode, ROCm, containers |
 | `avisblue-nvidia-gaming` | Bazzite-NVIDIA | wueesixx-pc | + Steam, Lutris, OpenRGB |
 | `avisblue-nvidia-gaming-dev` | nvidia-gaming | elgorrion-pc | + VSCode, CUDA, containers |
@@ -33,14 +33,17 @@ sudo bootc switch ghcr.io/elgorrion/avisblue-nvidia-gaming:latest
 # 1. Connect to fleet
 sudo tailscale up --accept-routes --operator=$USER
 
-# 2. Install Homebrew packages
+# 2. Install Chrome (optional, Firefox is pre-installed)
+flatpak install flathub com.google.Chrome
+
+# 3. Install Homebrew packages
 brew install chezmoi starship direnv
 brew install bat eza fd ripgrep git-delta gh glab fzf
 
-# 3. Apply dotfiles
+# 4. Apply dotfiles
 chezmoi init --apply --ssh elgorrion
 
-# 4. Install Claude Code (dev machines only)
+# 5. Install Claude Code (dev machines only)
 curl -fsSL https://claude.ai/install.sh | sh
 ```
 
@@ -49,7 +52,7 @@ curl -fsSL https://claude.ai/install.sh | sh
 All images include:
 - Bazzite kernel (HDR, winesync, LAVD/BORE schedulers)
 - KDE Plasma 6 + Valve's SteamOS themes
-- Google Chrome
+- Firefox (pre-installed), Chrome (via Flathub)
 - Tailscale
 - Homebrew
 - Distrobox

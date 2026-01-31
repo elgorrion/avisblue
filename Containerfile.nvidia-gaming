@@ -1,0 +1,60 @@
+# avisblue-nvidia-gaming: NVIDIA + Gaming
+# Target: wueesixx-pc (gaming workstation)
+#
+# Based on Bazzite-NVIDIA, stripped of handheld packages, gaming re-added.
+
+ARG FEDORA_VERSION="${FEDORA_VERSION:-43}"
+ARG BASE_IMAGE="ghcr.io/ublue-os/bazzite-nvidia:stable"
+
+FROM ${BASE_IMAGE}
+
+ARG IMAGE_NAME="avisblue-nvidia-gaming"
+ARG IMAGE_VENDOR="elgorrion"
+
+# Copy build scripts and system files
+COPY build_files /ctx/build_files
+COPY system_files /
+
+# Strip handheld/HTPC packages (keep gaming packages)
+RUN --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    /ctx/build_files/shared/strip-bazzite-handheld.sh
+
+# Apply fleet configuration (locale, SSH, etc.)
+RUN --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    /ctx/build_files/shared/fleet-config.sh
+
+# Add Google Chrome
+RUN --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    dnf5 -y config-manager addrepo --from-repofile=https://dl.google.com/linux/chrome/rpm/stable/x86_64/google-chrome.repo && \
+    dnf5 -y install google-chrome-stable
+
+# Add Aurora KDE apps
+RUN --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    dnf5 -y install \
+        kate \
+        okular \
+        gwenview \
+        ark \
+        kcalc \
+        spectacle \
+        partitionmanager \
+        kdeconnectd
+
+# Add gaming extras (OpenRGB)
+RUN --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    /ctx/build_files/roles/gaming.sh
+
+# Finalize image
+RUN --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    /ctx/build_files/shared/finalize.sh
+
+# Image metadata
+LABEL org.opencontainers.image.title="${IMAGE_NAME}"
+LABEL org.opencontainers.image.vendor="${IMAGE_VENDOR}"
+LABEL org.opencontainers.image.description="Avisblue nvidia-gaming image - NVIDIA + Gaming for CASA fleet"

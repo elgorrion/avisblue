@@ -1,0 +1,130 @@
+name: Build Avisblue Images
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**.md"
+      - ".github/workflows/build-iso.yml"
+  pull_request:
+    branches:
+      - main
+  schedule:
+    # Build weekly on Sunday at 00:00 UTC
+    - cron: "0 0 * * 0"
+  workflow_dispatch:
+
+env:
+  IMAGE_REGISTRY: ghcr.io/${{ github.repository_owner }}
+
+jobs:
+  # Build base images first (main and nvidia-gaming)
+  build-base:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: avisblue-main
+            containerfile: Containerfile.main
+            base: ghcr.io/ublue-os/bazzite:stable
+          - image: avisblue-nvidia-gaming
+            containerfile: Containerfile.nvidia-gaming
+            base: ghcr.io/ublue-os/bazzite-nvidia:stable
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push ${{ matrix.image }}
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ matrix.containerfile }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ env.IMAGE_REGISTRY }}/${{ matrix.image }}:latest
+            ${{ env.IMAGE_REGISTRY }}/${{ matrix.image }}:${{ github.sha }}
+          build-args: |
+            BASE_IMAGE=${{ matrix.base }}
+
+  # Build derived images after base images
+  build-derived:
+    runs-on: ubuntu-latest
+    needs: build-base
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: avisblue-main-dev
+            containerfile: Containerfile.main-dev
+            base_image: avisblue-main
+          - image: avisblue-nvidia-gaming-dev
+            containerfile: Containerfile.nvidia-gaming-dev
+            base_image: avisblue-nvidia-gaming
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push ${{ matrix.image }}
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ matrix.containerfile }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ env.IMAGE_REGISTRY }}/${{ matrix.image }}:latest
+            ${{ env.IMAGE_REGISTRY }}/${{ matrix.image }}:${{ github.sha }}
+          build-args: |
+            BASE_IMAGE=${{ env.IMAGE_REGISTRY }}/${{ matrix.base_image }}:${{ github.sha }}
+
+  # Sign images after build
+  sign:
+    runs-on: ubuntu-latest
+    needs: [build-base, build-derived]
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign images
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+          REGISTRY: ${{ env.IMAGE_REGISTRY }}
+          SHA: ${{ github.sha }}
+        run: |
+          for image in avisblue-main avisblue-main-dev avisblue-nvidia-gaming avisblue-nvidia-gaming-dev; do
+            cosign sign --yes "${REGISTRY}/${image}:latest"
+            cosign sign --yes "${REGISTRY}/${image}:${SHA}"
+          done

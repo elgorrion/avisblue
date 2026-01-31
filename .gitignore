@@ -1,0 +1,21 @@
+# Cosign private key - NEVER commit this!
+cosign.key
+
+# Build artifacts
+*.iso
+*.qcow2
+*.raw
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Local settings
+.claude/settings.local.json

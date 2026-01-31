@@ -1,0 +1,17 @@
+# bootc-image-builder config for avisblue-main variants
+# Used by build-iso.yml workflow
+
+[customizations]
+# Locale configuration
+[[customizations.locale]]
+keyboards = ["us"]
+languages = ["en_US.UTF-8"]
+
+[customizations.kernel]
+append = "quiet splash"
+
+# Users will be created during first boot via anaconda
+# or via cloud-init if using that method
+
+[customizations.timezone]
+timezone = "Europe/Vienna"

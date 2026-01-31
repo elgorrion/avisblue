@@ -1,0 +1,15 @@
+# bootc-image-builder config for avisblue-nvidia variants
+# Used by build-iso.yml workflow
+
+[customizations]
+# Locale configuration
+[[customizations.locale]]
+keyboards = ["us"]
+languages = ["en_US.UTF-8"]
+
+[customizations.kernel]
+# NVIDIA-specific kernel parameters
+append = "quiet splash nvidia-drm.modeset=1"
+
+[customizations.timezone]
+timezone = "Europe/Vienna"

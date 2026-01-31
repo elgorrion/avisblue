@@ -25,7 +25,7 @@ jobs:
           - avisblue-nvidia-gaming-dev
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Build ISO
         uses: jasonn3/build-container-installer@main

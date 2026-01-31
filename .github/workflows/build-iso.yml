@@ -38,7 +38,7 @@ jobs:
           iso_name: ${{ matrix.image }}.iso
 
       - name: Upload ISO
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.image }}-iso
           path: ${{ matrix.image }}.iso

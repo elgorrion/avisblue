@@ -25,10 +25,10 @@ RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     /ctx/build_files/shared/fleet-config.sh
 
-# Add Google Chrome
+# Setup browsers (Flathub for Chrome, Firefox already included)
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
-    /ctx/build_files/shared/install-chrome.sh
+    /ctx/build_files/shared/setup-browsers.sh
 
 # Add Aurora KDE apps
 RUN --mount=type=cache,dst=/var/cache \

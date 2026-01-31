@@ -6,6 +6,18 @@ set -euo pipefail
 
 echo "=== Installing Google Chrome ==="
 
+# Check if Chrome is already installed
+if command -v google-chrome-stable &> /dev/null; then
+    echo "Google Chrome is already installed, skipping..."
+    exit 0
+fi
+
+# Remove any existing /opt/google directory that might conflict
+if [ -d "/opt/google" ]; then
+    echo "Removing existing /opt/google directory..."
+    rm -rf /opt/google
+fi
+
 # Import Google's signing key
 echo "Importing Google signing key..."
 rpm --import https://dl.google.com/linux/linux_signing_key.pub

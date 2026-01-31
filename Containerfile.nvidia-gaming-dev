@@ -1,0 +1,33 @@
+# avisblue-nvidia-gaming-dev: NVIDIA + Gaming + Dev + CUDA
+# Target: elgorrion-pc (gaming + dev workstation)
+#
+# Builds on avisblue-nvidia-gaming, adds dev tools and CUDA.
+
+ARG BASE_IMAGE="ghcr.io/elgorrion/avisblue-nvidia-gaming:latest"
+
+FROM ${BASE_IMAGE}
+
+ARG IMAGE_NAME="avisblue-nvidia-gaming-dev"
+ARG IMAGE_VENDOR="elgorrion"
+
+# Copy role scripts
+COPY build_files/roles /ctx/build_files/roles
+
+# Add dev role (VSCode, container support)
+RUN --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    /ctx/build_files/roles/dev.sh
+
+# Add CUDA for NVIDIA compute (inference + containers)
+RUN --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    /ctx/build_files/roles/cuda.sh
+
+# Cleanup
+RUN rm -rf /ctx && \
+    dnf5 clean all
+
+# Image metadata
+LABEL org.opencontainers.image.title="${IMAGE_NAME}"
+LABEL org.opencontainers.image.vendor="${IMAGE_VENDOR}"
+LABEL org.opencontainers.image.description="Avisblue nvidia-gaming-dev image - NVIDIA + Gaming + Dev + CUDA for CASA fleet"

@@ -1,0 +1,33 @@
+# avisblue-main-dev: Mesa (AMD/Intel) + Dev + ROCm
+# Target: btecnb-vona (dev workstation)
+#
+# Builds on avisblue-main, adds dev tools and ROCm for AMD compute.
+
+ARG BASE_IMAGE="ghcr.io/elgorrion/avisblue-main:latest"
+
+FROM ${BASE_IMAGE}
+
+ARG IMAGE_NAME="avisblue-main-dev"
+ARG IMAGE_VENDOR="elgorrion"
+
+# Copy role scripts
+COPY build_files/roles /ctx/build_files/roles
+
+# Add dev role (VSCode, container support)
+RUN --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    /ctx/build_files/roles/dev.sh
+
+# Add ROCm for AMD compute (inference only)
+RUN --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    /ctx/build_files/roles/rocm.sh
+
+# Cleanup
+RUN rm -rf /ctx && \
+    dnf5 clean all
+
+# Image metadata
+LABEL org.opencontainers.image.title="${IMAGE_NAME}"
+LABEL org.opencontainers.image.vendor="${IMAGE_VENDOR}"
+LABEL org.opencontainers.image.description="Avisblue main-dev image - Mesa + Dev + ROCm for CASA fleet"

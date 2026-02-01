@@ -31,7 +31,9 @@ gh run watch <run-id>
 - **Base:** Bazzite (bazzite:stable / bazzite-nvidia:stable)
 - **Kernel:** bazzite-kernel (HDR, winesync, LAVD/BORE schedulers)
 - **Desktop:** KDE Plasma 6 (pure Qt - no GTK apps)
+- **Display:** Wayland-only (SDDM + kwin_wayland, XWayland for legacy apps)
 - **Updates:** Automatic via ublue-update
+- **Management:** Cockpit web console on :9090
 
 ## File Structure
 
@@ -43,16 +45,18 @@ build_files/
 │   ├── 10-cleanup-main.sh           # Remove gaming/handheld/bloat
 │   └── 10-cleanup-nvidia-gaming.sh  # Remove handheld/bloat (keep gaming)
 ├── shared/
-│   ├── 20-fleet-config.sh      # Locale, SSH, Tailscale
+│   ├── 20-fleet-config.sh      # Locale, SSH, Tailscale, Wayland env
+│   ├── 25-wayland-only.sh      # Remove X11 sessions, Wayland-only
 │   ├── 30-kde-apps.sh          # KDE RPMs (kate, okular, konsole, etc.)
-│   ├── 40-dev-tools.sh         # VSCode, podman, libvirt
-│   └── 90-finalize.sh          # Cleanup, ostree seal
+│   ├── 40-dev-tools.sh         # VSCode, podman, libvirt, Cockpit
+│   └── 90-finalize.sh          # Validation, cleanup, ostree seal
 └── roles/
     ├── 50-rocm.sh              # ROCm runtime (AMD compute)
     ├── 50-gaming.sh            # OpenRGB, ProtonUp-Qt, BoxBuddy
     └── 60-cuda.sh              # nvidia-container-toolkit
-system_files/                   # Files copied into image
-docs/                           # Package audits and documentation
+system_files/
+└── etc/sddm.conf.d/
+    └── 10-wayland.conf         # SDDM Wayland + kwin_wayland
 .github/workflows/build.yml     # CI/CD (build + cosign)
 ```
 
@@ -63,7 +67,8 @@ docs/                           # Package audits and documentation
 | Category | Packages |
 |----------|----------|
 | KDE Apps | kate, okular, gwenview, ark, kcalc, spectacle, partitionmanager, kdeconnectd, konsole |
-| Dev | code, podman-docker, docker-compose, qemu-kvm, libvirt, virt-manager |
+| Dev | code, podman-docker, podman-compose, qemu-kvm, libvirt, virt-manager |
+| Cockpit | cockpit-system, cockpit-podman, cockpit-storaged, cockpit-machines, cockpit-ostree |
 | System | Bazzite kernel, Tailscale, Homebrew, Distrobox |
 
 ### avisblue-main (Mesa)

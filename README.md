@@ -48,9 +48,11 @@ curl -fsSL https://claude.ai/install.sh | sh
 
 | Category | Packages |
 |----------|----------|
-| KDE Apps | kate, okular, gwenview, ark, kcalc, spectacle, partitionmanager, kdeconnectd |
-| Dev Tools | VSCode, podman-docker, docker-compose, qemu-kvm, libvirt, virt-manager |
+| KDE Apps | kate, okular, gwenview, ark, kcalc, spectacle, partitionmanager, kdeconnectd, konsole |
+| Dev Tools | VSCode, podman-docker, podman-compose, qemu-kvm, libvirt, virt-manager |
+| Cockpit | cockpit-system, cockpit-podman, cockpit-storaged, cockpit-machines, cockpit-ostree |
 | System | Bazzite kernel (HDR, winesync), Tailscale, Homebrew, Distrobox |
+| Display | Wayland-only (SDDM + kwin_wayland), XWayland for legacy apps |
 
 ### avisblue-main (Mesa)
 
@@ -81,21 +83,30 @@ podman build -f Containerfile.nvidia-gaming -t avisblue-nvidia-gaming:local .
 Bazzite (upstream)
 ├── avisblue-main
 │   ├── Strip gaming/handheld
-│   ├── Strip ALL Flatpaks
-│   ├── Fleet config
+│   ├── Strip GTK Flatpaks
+│   ├── Fleet config + Wayland-only
 │   ├── KDE apps (RPMs)
-│   ├── Dev tools
+│   ├── Dev tools + Cockpit
 │   └── ROCm
 │
 └── avisblue-nvidia-gaming
     ├── Strip handheld (keep gaming)
-    ├── Strip ALL Flatpaks
-    ├── Fleet config
+    ├── Strip GTK Flatpaks
+    ├── Fleet config + Wayland-only
     ├── KDE apps (RPMs)
-    ├── Dev tools
+    ├── Dev tools + Cockpit
     ├── Gaming extras
     └── CUDA
 ```
+
+## Fleet Management
+
+Access Cockpit at `http://machine:9090` for:
+- System monitoring and logs
+- Podman container management
+- VM management (libvirt)
+- rpm-ostree deployments and rollback
+- Storage/Btrfs management
 
 ## License
 

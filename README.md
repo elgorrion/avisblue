@@ -101,7 +101,7 @@ Bazzite (upstream)
 
 ## Fleet Management
 
-Access Cockpit at `http://machine:9090` for:
+Access Cockpit at `https://machine:9090` for:
 - System monitoring and logs
 - Podman container management
 - VM management (libvirt)

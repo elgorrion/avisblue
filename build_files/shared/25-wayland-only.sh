@@ -19,16 +19,11 @@ ls -la /usr/share/xsessions/ 2>/dev/null || echo "  (none)"
 echo "Available Wayland sessions:"
 ls -la /usr/share/wayland-sessions/ 2>/dev/null || echo "  (none)"
 
-# Ensure Wayland session is default
-echo "Setting Plasma Wayland as default session..."
+# Verify Wayland session exists
+# Note: SDDM will auto-select the only available session when X11 is removed
+# No need to write state.conf at build time - let SDDM generate it on first login
 if [[ -f /usr/share/wayland-sessions/plasma.desktop ]]; then
-    # Create SDDM state to default to Wayland
-    mkdir -p /var/lib/sddm
-    cat > /var/lib/sddm/state.conf << 'EOF'
-[Last]
-Session=/usr/share/wayland-sessions/plasma.desktop
-EOF
-    echo "Default session set to Plasma Wayland"
+    echo "Plasma Wayland session available (will be default since X11 removed)"
 else
     echo "WARNING: plasma.desktop not found in wayland-sessions"
 fi

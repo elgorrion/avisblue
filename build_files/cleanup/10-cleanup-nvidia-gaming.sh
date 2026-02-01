@@ -19,7 +19,7 @@
 #
 # What gets added back later:
 #   - kde-apps.sh: konsole, kate, okular, gwenview, ark, kcalc, spectacle, partitionmanager, kdeconnectd
-#   - dev-tools.sh: code, podman-docker, docker-compose, virt-manager, virt-viewer
+#   - dev-tools.sh: code, podman-docker, podman-compose, qemu-kvm, libvirt, cockpit-machines, cockpit-ostree
 #   - gaming.sh: openrgb, openrgb-udev-rules + Flatpaks (ProtonUp-Qt, BoxBuddy)
 #   - cuda.sh: nvidia-container-toolkit
 
@@ -219,37 +219,35 @@ echo "--- Removing RPM packages ---"
 echo "(Gaming packages are KEPT)"
 
 # STRICT: Core Bazzite packages - if missing, upstream changed significantly
-echo "[1/11] Handheld/HTPC packages (strict)..."
+echo "[1/10] Handheld/HTPC packages (strict)..."
 remove_packages strict "${HANDHELD[@]}"
 
 # LENIENT: May vary between Bazzite versions
-echo "[2/11] Streaming/Android packages..."
+echo "[2/10] Streaming/Android packages..."
 remove_packages lenient "${STREAMING[@]}"
 
-echo "[3/11] ROCm packages (NVIDIA uses CUDA)..."
+echo "[3/10] ROCm packages (NVIDIA uses CUDA)..."
 remove_packages lenient "${ROCM[@]}"
 
-echo "[4/11] Duplicate tools..."
+echo "[4/10] Duplicate tools..."
 remove_packages lenient "${DUPLICATES[@]}"
 
-echo "[5/11] Unused hardware support..."
+echo "[5/10] Unused hardware support..."
 remove_packages lenient "${HARDWARE[@]}"
 
-echo "[6/11] Unused features..."
+echo "[6/10] Unused features..."
 remove_packages lenient "${FEATURES[@]}"
 
-echo "[7/11] GTK apps..."
+echo "[7/10] GTK apps..."
 remove_packages lenient "${GTK_APPS[@]}"
 
-# Cockpit kept - see comment above
-
-echo "[9/11] Debug tools..."
+echo "[8/10] Debug tools..."
 remove_packages lenient "${DEBUG[@]}"
 
-echo "[10/11] IME packages..."
+echo "[9/10] IME packages..."
 remove_packages lenient "${IME[@]}"
 
-echo "[11/11] Fonts, shells, CLI tools..."
+echo "[10/10] Fonts, shells, CLI tools..."
 remove_packages lenient "${FONTS[@]}" "${SHELLS[@]}" "${CLI_TOOLS[@]}"
 
 echo ""

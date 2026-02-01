@@ -27,6 +27,32 @@ echo "AVISBLUE-MAIN: Cleaning Bazzite base image"
 echo "=============================================="
 
 #################################################
+# HELPER: Resilient package removal
+# Usage: remove_packages <mode> <array>
+#   mode: "strict" = fail if packages missing (Bazzite changed)
+#         "lenient" = skip silently if missing
+#################################################
+remove_packages() {
+    local mode="$1"
+    shift
+    local packages=("$@")
+
+    if [[ "$mode" == "strict" ]]; then
+        # These packages MUST exist in Bazzite - fail loudly if missing
+        if ! dnf5 -y remove "${packages[@]}" 2>&1 | tee /tmp/dnf-remove.log; then
+            if grep -q "No match for argument" /tmp/dnf-remove.log; then
+                echo "ERROR: Expected Bazzite packages not found: ${packages[*]}"
+                echo "Bazzite may have changed upstream. Check and update cleanup script."
+                exit 1
+            fi
+        fi
+    else
+        # These packages may not exist - skip silently
+        dnf5 -y remove "${packages[@]}" 2>/dev/null || true
+    fi
+}
+
+#################################################
 # SECTION 1: RPM PACKAGES TO REMOVE
 #################################################
 
@@ -215,44 +241,46 @@ QT_FLATPAKS=(
 echo ""
 echo "--- Removing RPM packages ---"
 
-echo "[1/13] Gaming packages..."
-dnf5 -y remove "${GAMING[@]}" 2>/dev/null || true
+# STRICT: Core Bazzite packages - if missing, upstream changed significantly
+echo "[1/13] Gaming packages (strict)..."
+remove_packages strict "${GAMING[@]}"
 
-echo "[2/13] Handheld/HTPC packages..."
-dnf5 -y remove "${HANDHELD[@]}" 2>/dev/null || true
+echo "[2/13] Handheld/HTPC packages (strict)..."
+remove_packages strict "${HANDHELD[@]}"
 
+# LENIENT: May vary between Bazzite versions
 echo "[3/13] Streaming/Android packages..."
-dnf5 -y remove "${STREAMING[@]}" 2>/dev/null || true
+remove_packages lenient "${STREAMING[@]}"
 
 echo "[4/13] ROCm packages (re-added later)..."
-dnf5 -y remove "${ROCM[@]}" 2>/dev/null || true
+remove_packages lenient "${ROCM[@]}"
 
 echo "[5/13] 32-bit libraries..."
-dnf5 -y remove ${LIB32[@]} 2>/dev/null || true
+remove_packages lenient "${LIB32[@]}"
 
 echo "[6/13] Duplicate tools..."
-dnf5 -y remove "${DUPLICATES[@]}" 2>/dev/null || true
+remove_packages lenient "${DUPLICATES[@]}"
 
 echo "[7/13] Unused hardware support..."
-dnf5 -y remove "${HARDWARE[@]}" 2>/dev/null || true
+remove_packages lenient "${HARDWARE[@]}"
 
 echo "[8/13] Unused features..."
-dnf5 -y remove "${FEATURES[@]}" 2>/dev/null || true
+remove_packages lenient "${FEATURES[@]}"
 
 echo "[9/13] GTK apps..."
-dnf5 -y remove "${GTK_APPS[@]}" 2>/dev/null || true
+remove_packages lenient "${GTK_APPS[@]}"
 
 echo "[10/13] Cockpit..."
-dnf5 -y remove "${COCKPIT[@]}" 2>/dev/null || true
+remove_packages lenient "${COCKPIT[@]}"
 
 echo "[11/13] Debug tools..."
-dnf5 -y remove "${DEBUG[@]}" 2>/dev/null || true
+remove_packages lenient "${DEBUG[@]}"
 
 echo "[12/13] IME packages..."
-dnf5 -y remove "${IME[@]}" 2>/dev/null || true
+remove_packages lenient "${IME[@]}"
 
 echo "[13/13] Fonts, shells, CLI tools..."
-dnf5 -y remove "${FONTS[@]}" "${SHELLS[@]}" "${CLI_TOOLS[@]}" 2>/dev/null || true
+remove_packages lenient "${FONTS[@]}" "${SHELLS[@]}" "${CLI_TOOLS[@]}"
 
 echo ""
 echo "--- Removing Flatpaks ---"

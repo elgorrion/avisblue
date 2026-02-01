@@ -24,6 +24,11 @@ RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     /ctx/build_files/shared/20-fleet-config.sh
 
+# 25. Wayland-only configuration (remove X11 sessions)
+RUN --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    /ctx/build_files/shared/25-wayland-only.sh
+
 # 30. Install KDE apps (RPMs)
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \

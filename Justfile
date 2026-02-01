@@ -5,26 +5,16 @@
 default:
     @just --list
 
-# Build avisblue-main (Mesa base)
+# Build avisblue-main (Mesa + Dev + ROCm)
 build-main:
     podman build -f Containerfile.main -t avisblue-main:local .
 
-# Build avisblue-main-dev (Mesa + Dev + ROCm)
-build-main-dev: build-main
-    podman build -f Containerfile.main-dev -t avisblue-main-dev:local \
-        --build-arg BASE_IMAGE=localhost/avisblue-main:local .
-
-# Build avisblue-nvidia-gaming (NVIDIA + Gaming)
+# Build avisblue-nvidia-gaming (NVIDIA + Gaming + Dev + CUDA)
 build-nvidia-gaming:
     podman build -f Containerfile.nvidia-gaming -t avisblue-nvidia-gaming:local .
 
-# Build avisblue-nvidia-gaming-dev (NVIDIA + Gaming + Dev + CUDA)
-build-nvidia-gaming-dev: build-nvidia-gaming
-    podman build -f Containerfile.nvidia-gaming-dev -t avisblue-nvidia-gaming-dev:local \
-        --build-arg BASE_IMAGE=localhost/avisblue-nvidia-gaming:local .
-
 # Build all images
-build-all: build-main build-main-dev build-nvidia-gaming build-nvidia-gaming-dev
+build-all: build-main build-nvidia-gaming
     @echo "All images built successfully"
 
 # List local avisblue images

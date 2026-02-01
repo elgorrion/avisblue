@@ -35,6 +35,22 @@ SSH_ASKPASS=/usr/libexec/ssh/ksshaskpass
 SSH_ASKPASS_REQUIRE=prefer
 EOF
 
+# Wayland environment configuration
+echo "Configuring Wayland environment..."
+cat > /etc/skel/.config/environment.d/wayland.conf << 'EOF'
+# Prefer Wayland for Qt applications (fallback to XWayland)
+QT_QPA_PLATFORM=wayland;xcb
+
+# Prefer Wayland for GTK applications (fallback to X11)
+GDK_BACKEND=wayland,x11
+
+# Enable Wayland for Firefox
+MOZ_ENABLE_WAYLAND=1
+
+# Enable Wayland for Electron apps
+ELECTRON_OZONE_PLATFORM_HINT=auto
+EOF
+
 # Create ssh-agent systemd user service template
 mkdir -p /etc/skel/.config/systemd/user
 cat > /etc/skel/.config/systemd/user/ssh-agent.service << 'EOF'

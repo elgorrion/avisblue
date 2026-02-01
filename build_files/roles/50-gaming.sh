@@ -21,9 +21,13 @@ dnf5 -y install \
 # Create openrgb group for i2c access
 getent group openrgb || groupadd openrgb
 
-# Install Qt Flatpaks for gaming management
-echo "Installing ProtonUp-Qt and BoxBuddy..."
-flatpak install --system -y flathub net.davidotek.pupgui2 || true
-flatpak install --system -y flathub io.github.dvlv.boxbuddyrs || true
+# Install Qt Flatpaks for gaming management (only if flatpak available)
+if command -v flatpak &>/dev/null && flatpak remotes 2>/dev/null | grep -q flathub; then
+    echo "Installing ProtonUp-Qt and BoxBuddy..."
+    flatpak install --system -y flathub net.davidotek.pupgui2 || true
+    flatpak install --system -y flathub io.github.dvlv.boxbuddyrs || true
+else
+    echo "WARNING: Flatpak/Flathub not available, skipping Flatpak installs"
+fi
 
 echo "=== Gaming extras complete ==="

@@ -6,6 +6,23 @@ set -euo pipefail
 
 echo "=== Finalizing avisblue image ==="
 
+# Validate package database integrity
+echo "Validating package database..."
+if ! rpm -qa > /dev/null 2>&1; then
+    echo "ERROR: Package database corrupted after cleanup"
+    exit 1
+fi
+
+# Verify critical packages still present
+CRITICAL_PACKAGES=(plasma-desktop konsole kate systemd)
+for pkg in "${CRITICAL_PACKAGES[@]}"; do
+    if ! rpm -q "$pkg" > /dev/null 2>&1; then
+        echo "ERROR: Critical package $pkg was removed!"
+        exit 1
+    fi
+done
+echo "Package database valid, critical packages present"
+
 # Clean package caches
 echo "Cleaning package caches..."
 dnf5 clean all

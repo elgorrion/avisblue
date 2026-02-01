@@ -9,8 +9,21 @@ echo "=== Installing CUDA role packages ==="
 # nvidia-container-toolkit for containerized AI workloads
 echo "Installing nvidia-container-toolkit..."
 
-# Add NVIDIA container toolkit repo
-dnf5 -y config-manager addrepo --from-repofile=https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
+# Add NVIDIA container toolkit repo with retry logic
+echo "Adding NVIDIA container toolkit repository..."
+NVIDIA_REPO_URL="https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo"
+for attempt in 1 2 3; do
+    if dnf5 -y config-manager addrepo --from-repofile="$NVIDIA_REPO_URL" 2>&1; then
+        echo "NVIDIA repo added successfully"
+        break
+    fi
+    echo "Attempt $attempt failed, retrying in 2s..."
+    sleep 2
+    if [[ $attempt -eq 3 ]]; then
+        echo "ERROR: Failed to add NVIDIA container toolkit repo after 3 attempts"
+        exit 1
+    fi
+done
 
 dnf5 -y install nvidia-container-toolkit
 

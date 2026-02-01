@@ -19,32 +19,37 @@ RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     /ctx/build_files/shared/strip-bazzite.sh
 
-# 2. Strip ALL Flatpaks (use RPMs instead)
+# 2. Strip unnecessary upstream packages (ublue-main + Bazzite bloat)
+RUN --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
+    /ctx/build_files/shared/strip-upstream.sh
+
+# 3. Strip ALL Flatpaks (use RPMs instead)
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     /ctx/build_files/shared/strip-flatpaks.sh
 
-# 3. Apply fleet configuration (locale, SSH, Tailscale)
+# 4. Apply fleet configuration (locale, SSH, Tailscale)
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     /ctx/build_files/shared/fleet-config.sh
 
-# 4. Install KDE apps (RPMs)
+# 5. Install KDE apps (RPMs)
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     /ctx/build_files/shared/kde-apps.sh
 
-# 5. Install dev tools (VSCode, podman, libvirt)
+# 6. Install dev tools (VSCode, podman, libvirt)
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     /ctx/build_files/shared/dev-tools.sh
 
-# 6. Install ROCm for AMD compute
+# 7. Install ROCm for AMD compute
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     /ctx/build_files/roles/rocm.sh
 
-# 7. Finalize image
+# 8. Finalize image
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     /ctx/build_files/shared/finalize.sh

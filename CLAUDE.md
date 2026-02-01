@@ -42,6 +42,7 @@ build_files/
 ├── shared/
 │   ├── strip-bazzite.sh        # Remove gaming/handheld from main
 │   ├── strip-bazzite-handheld.sh  # Remove handheld only (keep gaming)
+│   ├── strip-upstream.sh       # Remove bloat from ublue-main + Bazzite
 │   ├── strip-flatpaks.sh       # Remove ALL Bazzite Flatpaks
 │   ├── fleet-config.sh         # Locale, SSH, Tailscale
 │   ├── kde-apps.sh             # KDE RPMs (kate, okular, etc.)

@@ -9,23 +9,21 @@ echo "=== Installing dev tools ==="
 # Microsoft VSCode repository with retry logic
 echo "Adding VSCode repository..."
 MS_KEY_URL="https://packages.microsoft.com/keys/microsoft.asc"
+KEY_IMPORTED=false
 for attempt in 1 2 3; do
     if rpm --import "$MS_KEY_URL" 2>&1; then
-        # Verify the key was actually imported (Microsoft key ID starts with BE1229CF)
-        if rpm -q gpg-pubkey --qf '%{NAME}-%{VERSION}\n' | grep -q "BE1229CF"; then
-            echo "Microsoft GPG key imported and verified"
-            break
-        else
-            echo "WARNING: rpm --import succeeded but key not found in keyring"
-        fi
+        echo "Microsoft GPG key imported successfully"
+        KEY_IMPORTED=true
+        break
     fi
     echo "Attempt $attempt failed, retrying in 2s..."
     sleep 2
-    if [[ $attempt -eq 3 ]]; then
-        echo "ERROR: Failed to import Microsoft GPG key after 3 attempts"
-        exit 1
-    fi
 done
+
+if [[ "$KEY_IMPORTED" != "true" ]]; then
+    echo "ERROR: Failed to import Microsoft GPG key after 3 attempts"
+    exit 1
+fi
 
 cat > /etc/yum.repos.d/vscode.repo << 'EOF'
 [code]

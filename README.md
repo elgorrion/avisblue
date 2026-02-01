@@ -65,7 +65,7 @@ curl -fsSL https://claude.ai/install.sh | sh
 - Gaming: Steam, Gamescope, MangoHud, vkBasalt (from Bazzite)
 - Gaming extras: OpenRGB
 - CUDA: nvidia-container-toolkit
-- Flatpaks: Post-boot via `fleet-packages-avisblue` (ProtonUp-Qt, BoxBuddy)
+- Flatpaks: Post-boot via `fleet-packages-avisblue` (ProtonUp-Qt, ScopeBuddy)
 
 ## Building Locally
 

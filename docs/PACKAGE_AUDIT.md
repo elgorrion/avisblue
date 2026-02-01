@@ -467,7 +467,7 @@ Base atomic KDE Plasma desktop. Includes:
 | Flatpak | Purpose |
 |---------|---------|
 | net.davidotek.pupgui2 | ProtonUp-Qt |
-| io.github.dvlv.boxbuddyrs | BoxBuddy |
+| io.github.rfrench3.scopebuddy-gui | ScopeBuddy (Gamescope config) |
 
 ### Kept from Bazzite-NVIDIA
 
@@ -511,7 +511,7 @@ Base atomic KDE Plasma desktop. Includes:
 | Multimedia | ~20 | PipeWire (patched), ffmpeg, codecs |
 | Fonts | ~5 | nerd-fonts, fira-code-fonts, CJK, emoji |
 | RGB | 2 | openrgb, openrgb-udev-rules |
-| Flatpaks | 2 | ProtonUp-Qt, BoxBuddy |
+| Flatpaks | 2 | ProtonUp-Qt, ScopeBuddy |
 
 ---
 

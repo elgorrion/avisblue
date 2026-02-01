@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # gaming.sh - Gaming extras for NVIDIA gaming image
-# OpenRGB only - Flatpaks (ProtonUp-Qt, BoxBuddy) installed post-boot
+# OpenRGB only - Flatpaks (ProtonUp-Qt, ScopeBuddy) installed post-boot via fleet-packages
 
 set -euo pipefail
 

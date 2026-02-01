@@ -81,7 +81,7 @@ system_files/
 - Gaming: Steam, Gamescope, MangoHud, vkBasalt (from Bazzite)
 - Gaming extras: OpenRGB
 - CUDA: nvidia-container-toolkit
-- Flatpaks: Post-boot via `fleet-packages-avisblue` (ProtonUp-Qt, BoxBuddy)
+- Flatpaks: Post-boot via `fleet-packages-avisblue` (ProtonUp-Qt, ScopeBuddy)
 
 ## Rebase
 

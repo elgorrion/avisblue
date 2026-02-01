@@ -20,7 +20,7 @@
 # What gets added back later:
 #   - kde-apps.sh: konsole, kate, okular, gwenview, ark, kcalc, spectacle, partitionmanager, kdeconnectd
 #   - dev-tools.sh: code, podman-docker, podman-compose, qemu-kvm, libvirt, cockpit-machines, cockpit-ostree
-#   - gaming.sh: openrgb, openrgb-udev-rules + Flatpaks (ProtonUp-Qt, BoxBuddy)
+#   - gaming.sh: openrgb, openrgb-udev-rules (Flatpaks via fleet-packages post-boot)
 #   - cuda.sh: nvidia-container-toolkit
 
 set -euo pipefail
@@ -190,7 +190,7 @@ CLI_TOOLS=(
 
 #################################################
 # SECTION 2: FLATPAKS TO REMOVE
-# NOTE: gaming.sh will add ProtonUp-Qt and BoxBuddy later
+# NOTE: Flatpaks (ProtonUp-Qt, ScopeBuddy) installed post-boot via fleet-packages
 #################################################
 
 GTK_FLATPAKS=(

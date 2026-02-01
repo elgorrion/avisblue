@@ -98,10 +98,11 @@ DUPLICATES=(
 )
 
 # Hardware we don't have in CASA fleet
+# NOTE: Do NOT remove libwacom-surface - it triggers Plasma removal cascade
 HARDWARE=(
     # Microsoft Surface
     iptsd
-    libwacom-surface
+    # libwacom-surface - KEEP: removing causes Plasma dependency cascade
     # Framework laptop
     fw-ectool
     fw-fanctrl

@@ -14,7 +14,8 @@ if ! rpm -qa > /dev/null 2>&1; then
 fi
 
 # Verify critical packages still present
-CRITICAL_PACKAGES=(plasma-desktop konsole kate systemd)
+# Note: Only check packages in base Bazzite, not ones we add (like konsole)
+CRITICAL_PACKAGES=(plasma-desktop kwin kate systemd)
 for pkg in "${CRITICAL_PACKAGES[@]}"; do
     if ! rpm -q "$pkg" > /dev/null 2>&1; then
         echo "ERROR: Critical package $pkg was removed!"

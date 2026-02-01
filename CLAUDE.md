@@ -47,7 +47,7 @@ build_files/
 ├── shared/
 │   ├── 20-fleet-config.sh      # Locale, SSH, Tailscale, Wayland env
 │   ├── 25-wayland-only.sh      # Remove X11 sessions, Wayland-only
-│   ├── 30-kde-apps.sh          # KDE RPMs (kate, okular, konsole, etc.)
+│   ├── 30-kde-apps.sh          # KDE RPMs + Chromium browser
 │   ├── 40-dev-tools.sh         # VSCode, podman, libvirt, Cockpit
 │   └── 90-finalize.sh          # Validation, cleanup, ostree seal
 └── roles/
@@ -66,7 +66,7 @@ system_files/
 
 | Category | Packages |
 |----------|----------|
-| KDE Apps | kate, okular, gwenview, ark, kcalc, spectacle, partitionmanager, kdeconnectd, konsole |
+| KDE Apps | kate, okular, gwenview, ark, kcalc, spectacle, partitionmanager, kdeconnectd, konsole, chromium |
 | Dev | code, podman-docker, podman-compose, qemu-kvm, libvirt |
 | Cockpit | cockpit-system, cockpit-podman, cockpit-storaged, cockpit-machines, cockpit-ostree |
 | System | Bazzite kernel, Tailscale, Homebrew, Distrobox |

@@ -14,6 +14,10 @@ dnf5 -y install \
     kcalc \
     spectacle \
     partitionmanager \
-    kdeconnectd
+    kdeconnectd \
+    konsole
+
+# Note: Bazzite removes konsole in favor of ptyxis (GNOME terminal)
+# We remove ptyxis in strip-upstream.sh and re-add konsole here
 
 echo "=== KDE apps installed ==="

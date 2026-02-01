@@ -14,45 +14,35 @@ ARG IMAGE_VENDOR="elgorrion"
 COPY build_files /ctx/build_files
 COPY system_files /
 
-# 1. Strip gaming/handheld packages from Bazzite
+# 10. Cleanup: Remove all unnecessary packages (gaming, handheld, bloat)
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
-    /ctx/build_files/shared/strip-bazzite.sh
+    /ctx/build_files/cleanup/10-cleanup-main.sh
 
-# 2. Strip unnecessary upstream packages (ublue-main + Bazzite bloat)
+# 20. Fleet configuration (locale, SSH, Tailscale)
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
-    /ctx/build_files/shared/strip-upstream.sh
+    /ctx/build_files/shared/20-fleet-config.sh
 
-# 3. Strip ALL Flatpaks (use RPMs instead)
+# 30. Install KDE apps (RPMs)
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
-    /ctx/build_files/shared/strip-flatpaks.sh
+    /ctx/build_files/shared/30-kde-apps.sh
 
-# 4. Apply fleet configuration (locale, SSH, Tailscale)
+# 40. Install dev tools (VSCode, podman, libvirt)
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
-    /ctx/build_files/shared/fleet-config.sh
+    /ctx/build_files/shared/40-dev-tools.sh
 
-# 5. Install KDE apps (RPMs)
+# 50. Install ROCm for AMD compute
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
-    /ctx/build_files/shared/kde-apps.sh
+    /ctx/build_files/roles/50-rocm.sh
 
-# 6. Install dev tools (VSCode, podman, libvirt)
+# 90. Finalize image
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
-    /ctx/build_files/shared/dev-tools.sh
-
-# 7. Install ROCm for AMD compute
-RUN --mount=type=cache,dst=/var/cache \
-    --mount=type=cache,dst=/var/log \
-    /ctx/build_files/roles/rocm.sh
-
-# 8. Finalize image
-RUN --mount=type=cache,dst=/var/cache \
-    --mount=type=cache,dst=/var/log \
-    /ctx/build_files/shared/finalize.sh
+    /ctx/build_files/shared/90-finalize.sh
 
 # Image metadata
 LABEL org.opencontainers.image.title="${IMAGE_NAME}"

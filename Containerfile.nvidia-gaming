@@ -14,50 +14,40 @@ ARG IMAGE_VENDOR="elgorrion"
 COPY build_files /ctx/build_files
 COPY system_files /
 
-# 1. Strip handheld/HTPC packages (keep gaming)
+# 10. Cleanup: Remove handheld/bloat (keeps gaming packages)
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
-    /ctx/build_files/shared/strip-bazzite-handheld.sh
+    /ctx/build_files/cleanup/10-cleanup-nvidia-gaming.sh
 
-# 2. Strip unnecessary upstream packages (ublue-main + Bazzite bloat)
+# 20. Fleet configuration (locale, SSH, Tailscale)
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
-    /ctx/build_files/shared/strip-upstream.sh
+    /ctx/build_files/shared/20-fleet-config.sh
 
-# 3. Strip ALL Flatpaks (use RPMs instead)
+# 30. Install KDE apps (RPMs)
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
-    /ctx/build_files/shared/strip-flatpaks.sh
+    /ctx/build_files/shared/30-kde-apps.sh
 
-# 4. Apply fleet configuration (locale, SSH, Tailscale)
+# 40. Install dev tools (VSCode, podman, libvirt)
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
-    /ctx/build_files/shared/fleet-config.sh
+    /ctx/build_files/shared/40-dev-tools.sh
 
-# 5. Install KDE apps (RPMs)
+# 50. Install gaming extras (OpenRGB, ProtonUp-Qt, BoxBuddy)
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
-    /ctx/build_files/shared/kde-apps.sh
+    /ctx/build_files/roles/50-gaming.sh
 
-# 6. Install dev tools (VSCode, podman, libvirt)
+# 60. Install CUDA for NVIDIA compute
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
-    /ctx/build_files/shared/dev-tools.sh
+    /ctx/build_files/roles/60-cuda.sh
 
-# 7. Install gaming extras (OpenRGB, ProtonUp-Qt)
+# 90. Finalize image
 RUN --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
-    /ctx/build_files/roles/gaming.sh
-
-# 8. Install CUDA for NVIDIA compute
-RUN --mount=type=cache,dst=/var/cache \
-    --mount=type=cache,dst=/var/log \
-    /ctx/build_files/roles/cuda.sh
-
-# 9. Finalize image
-RUN --mount=type=cache,dst=/var/cache \
-    --mount=type=cache,dst=/var/log \
-    /ctx/build_files/shared/finalize.sh
+    /ctx/build_files/shared/90-finalize.sh
 
 # Image metadata
 LABEL org.opencontainers.image.title="${IMAGE_NAME}"

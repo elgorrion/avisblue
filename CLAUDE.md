@@ -39,20 +39,20 @@ gh run watch <run-id>
 Containerfile.main              # Mesa + Dev + ROCm
 Containerfile.nvidia-gaming     # NVIDIA + Gaming + Dev + CUDA
 build_files/
+├── cleanup/
+│   ├── 10-cleanup-main.sh           # Remove gaming/handheld/bloat
+│   └── 10-cleanup-nvidia-gaming.sh  # Remove handheld/bloat (keep gaming)
 ├── shared/
-│   ├── strip-bazzite.sh        # Remove gaming/handheld from main
-│   ├── strip-bazzite-handheld.sh  # Remove handheld only (keep gaming)
-│   ├── strip-upstream.sh       # Remove bloat from ublue-main + Bazzite
-│   ├── strip-flatpaks.sh       # Remove ALL Bazzite Flatpaks
-│   ├── fleet-config.sh         # Locale, SSH, Tailscale
-│   ├── kde-apps.sh             # KDE RPMs (kate, okular, etc.)
-│   ├── dev-tools.sh            # VSCode, podman, libvirt
-│   └── finalize.sh             # Cleanup, ostree seal
+│   ├── 20-fleet-config.sh      # Locale, SSH, Tailscale
+│   ├── 30-kde-apps.sh          # KDE RPMs (kate, okular, konsole, etc.)
+│   ├── 40-dev-tools.sh         # VSCode, podman, libvirt
+│   └── 90-finalize.sh          # Cleanup, ostree seal
 └── roles/
-    ├── gaming.sh               # OpenRGB, ProtonUp-Qt, BoxBuddy
-    ├── rocm.sh                 # ROCm runtime (AMD compute)
-    └── cuda.sh                 # nvidia-container-toolkit
+    ├── 50-rocm.sh              # ROCm runtime (AMD compute)
+    ├── 50-gaming.sh            # OpenRGB, ProtonUp-Qt, BoxBuddy
+    └── 60-cuda.sh              # nvidia-container-toolkit
 system_files/                   # Files copied into image
+docs/                           # Package audits and documentation
 .github/workflows/build.yml     # CI/CD (build + cosign)
 ```
 
@@ -62,7 +62,7 @@ system_files/                   # Files copied into image
 
 | Category | Packages |
 |----------|----------|
-| KDE Apps | kate, okular, gwenview, ark, kcalc, spectacle, partitionmanager, kdeconnectd |
+| KDE Apps | kate, okular, gwenview, ark, kcalc, spectacle, partitionmanager, kdeconnectd, konsole |
 | Dev | code, podman-docker, docker-compose, qemu-kvm, libvirt, virt-manager |
 | System | Bazzite kernel, Tailscale, Homebrew, Distrobox |
 

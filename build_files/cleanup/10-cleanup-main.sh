@@ -2,7 +2,6 @@
 # cleanup-main.sh - Remove all unnecessary packages from Bazzite for avisblue-main
 #
 # This is the FIRST step after FROM bazzite:stable
-# Consolidates all removals into a single layer for smaller image size
 #
 # What remains after this script:
 #   - KDE Plasma 6 desktop (minus konsole, partitionmanager - re-added later)
@@ -144,7 +143,7 @@ FEATURES=(
     # DualSense controller inhibitor
     ds-inhibit
     # HDMI-CEC for HTPCs
-    libcec
+    # libcec
     # App store GUI (we use flatpak CLI)
     bazaar
     krunner-bazaar
@@ -153,7 +152,7 @@ FEATURES=(
     # GUI dialog tool for scripts
     yad
     # Web app creator
-    webapp-manager
+    # webapp-manager
 )
 
 # GTK apps - we want pure KDE

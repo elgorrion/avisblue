@@ -123,7 +123,7 @@ FEATURES=(
     # DualSense controller inhibitor
     ds-inhibit
     # HDMI-CEC for HTPCs
-    libcec
+    # libcec
     # App store GUI (we use flatpak CLI)
     bazaar
     krunner-bazaar
@@ -132,7 +132,7 @@ FEATURES=(
     # GUI dialog tool for scripts
     yad
     # Web app creator
-    webapp-manager
+    # webapp-manager
 )
 
 # GTK apps - we want pure KDE

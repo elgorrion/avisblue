@@ -36,10 +36,11 @@ echo "Installing VSCode..."
 dnf5 -y install code
 
 # Container and virtualization tools
+# Note: podman-compose instead of docker-compose for pure podman setup
 echo "Installing container/virtualization tools..."
 dnf5 -y install \
     podman-docker \
-    docker-compose \
+    podman-compose \
     qemu-kvm \
     libvirt \
     virt-manager \

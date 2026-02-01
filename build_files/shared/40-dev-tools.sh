@@ -37,14 +37,13 @@ dnf5 -y install code
 
 # Container and virtualization tools
 # Note: podman-compose instead of docker-compose for pure podman setup
+# Note: virt-manager/virt-viewer replaced by cockpit-machines
 echo "Installing container/virtualization tools..."
 dnf5 -y install \
     podman-docker \
     podman-compose \
     qemu-kvm \
-    libvirt \
-    virt-manager \
-    virt-viewer
+    libvirt
 
 # Cockpit additions for fleet management
 # Base cockpit packages are kept from Bazzite, add VM and ostree management

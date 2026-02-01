@@ -67,7 +67,7 @@ system_files/
 | Category | Packages |
 |----------|----------|
 | KDE Apps | kate, okular, gwenview, ark, kcalc, spectacle, partitionmanager, kdeconnectd, konsole |
-| Dev | code, podman-docker, podman-compose, qemu-kvm, libvirt, virt-manager |
+| Dev | code, podman-docker, podman-compose, qemu-kvm, libvirt |
 | Cockpit | cockpit-system, cockpit-podman, cockpit-storaged, cockpit-machines, cockpit-ostree |
 | System | Bazzite kernel, Tailscale, Homebrew, Distrobox |
 

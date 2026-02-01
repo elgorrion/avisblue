@@ -143,15 +143,10 @@ GTK_APPS=(
     ptyxis
 )
 
-# Cockpit web management - we use SSH/terminal
-COCKPIT=(
-    cockpit-networkmanager
-    cockpit-podman
-    cockpit-selinux
-    cockpit-system
-    cockpit-files
-    cockpit-storaged
-)
+# Cockpit web management - KEEP for fleet management
+# cockpit-system, cockpit-podman, cockpit-storaged, cockpit-networkmanager,
+# cockpit-files, cockpit-selinux are all useful for remote management
+# Additional packages added in dev-tools.sh: cockpit-machines, cockpit-ostree
 
 # Testing/debugging tools
 DEBUG=(
@@ -246,8 +241,7 @@ remove_packages lenient "${FEATURES[@]}"
 echo "[7/11] GTK apps..."
 remove_packages lenient "${GTK_APPS[@]}"
 
-echo "[8/11] Cockpit..."
-remove_packages lenient "${COCKPIT[@]}"
+# Cockpit kept - see comment above
 
 echo "[9/11] Debug tools..."
 remove_packages lenient "${DEBUG[@]}"

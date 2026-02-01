@@ -46,6 +46,13 @@ dnf5 -y install \
     virt-manager \
     virt-viewer
 
+# Cockpit additions for fleet management
+# Base cockpit packages are kept from Bazzite, add VM and ostree management
+echo "Installing Cockpit extensions..."
+dnf5 -y install \
+    cockpit-machines \
+    cockpit-ostree
+
 # Enable libvirtd
 echo "Enabling libvirtd..."
 systemctl enable libvirtd.socket || true

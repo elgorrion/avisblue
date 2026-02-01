@@ -31,7 +31,7 @@ echo "Configuring SSH agent..."
 mkdir -p /etc/skel/.config/environment.d
 cat > /etc/skel/.config/environment.d/ssh-agent.conf << 'EOF'
 SSH_AUTH_SOCK=$XDG_RUNTIME_DIR/ssh-agent.socket
-SSH_ASKPASS=/usr/libexec/ssh/ksshaskpass
+SSH_ASKPASS=/usr/bin/ksshaskpass
 SSH_ASKPASS_REQUIRE=prefer
 EOF
 

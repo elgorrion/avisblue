@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # cuda.sh - CUDA role for NVIDIA compute (inference/containers)
-# Target: elgorrion-pc (RTX 4080)
 
 set -euo pipefail
 

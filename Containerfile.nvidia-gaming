@@ -1,6 +1,4 @@
 # avisblue-nvidia-gaming: NVIDIA + Gaming + Dev + CUDA
-# Targets: wueesixx-pc, elgorrion-pc
-#
 # Based on Bazzite-NVIDIA, stripped of handheld, with dev tools added.
 
 ARG BASE_IMAGE="ghcr.io/ublue-os/bazzite-nvidia:stable"
@@ -57,4 +55,4 @@ RUN --mount=type=cache,dst=/var/cache \
 # Image metadata
 LABEL org.opencontainers.image.title="${IMAGE_NAME}"
 LABEL org.opencontainers.image.vendor="${IMAGE_VENDOR}"
-LABEL org.opencontainers.image.description="Avisblue nvidia-gaming - NVIDIA + Gaming + Dev + CUDA for CASA fleet"
+LABEL org.opencontainers.image.description="Avisblue nvidia-gaming - NVIDIA + Gaming + Dev + CUDA"

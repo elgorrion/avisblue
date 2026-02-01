@@ -97,7 +97,7 @@ DUPLICATES=(
     nvtop
 )
 
-# Hardware we don't have in CASA fleet
+# Hardware-specific packages to remove
 # NOTE: Do NOT remove libwacom-surface - it triggers Plasma removal cascade
 HARDWARE=(
     # Microsoft Surface

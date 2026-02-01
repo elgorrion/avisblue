@@ -1,4 +1,4 @@
-# Avisblue - Custom Universal Blue distro for CASA fleet
+# Avisblue - Custom Universal Blue distro based on Bazzite
 # Local build commands
 
 # Default recipe

@@ -1,6 +1,4 @@
 # avisblue-main: Mesa + Dev + ROCm
-# Targets: enviada-nb, btecnb-vona
-#
 # Based on Bazzite, stripped of gaming/handheld, with dev tools added.
 
 ARG BASE_IMAGE="ghcr.io/ublue-os/bazzite:stable"
@@ -52,4 +50,4 @@ RUN --mount=type=cache,dst=/var/cache \
 # Image metadata
 LABEL org.opencontainers.image.title="${IMAGE_NAME}"
 LABEL org.opencontainers.image.vendor="${IMAGE_VENDOR}"
-LABEL org.opencontainers.image.description="Avisblue main - Mesa + Dev + ROCm for CASA fleet"
+LABEL org.opencontainers.image.description="Avisblue main - Mesa + Dev + ROCm"

@@ -1,13 +1,13 @@
 # CLAUDE.md - Avisblue
 
-Custom Universal Blue distro for CASA fleet, based on Bazzite.
+Custom Universal Blue distro based on Bazzite.
 
 ## Images
 
-| Image | Targets | Contents |
-|-------|---------|----------|
-| `avisblue-main` | enviada-nb, btecnb-vona | Mesa + Dev + ROCm |
-| `avisblue-nvidia-gaming` | wueesixx-pc, elgorrion-pc | NVIDIA + Gaming + Dev + CUDA |
+| Image | Contents |
+|-------|----------|
+| `avisblue-main` | Mesa + Dev + ROCm |
+| `avisblue-nvidia-gaming` | NVIDIA + Gaming + Dev + CUDA |
 
 Both images include: KDE apps (RPMs), VSCode, podman, libvirt, Tailscale, Homebrew.
 

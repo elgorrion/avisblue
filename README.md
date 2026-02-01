@@ -1,13 +1,13 @@
 # Avisblue
 
-Custom [Universal Blue](https://universal-blue.org/) distro for CASA fleet, based on [Bazzite](https://bazzite.gg/).
+Custom [Universal Blue](https://universal-blue.org/) distro based on [Bazzite](https://bazzite.gg/).
 
 ## Images
 
-| Image | Base | Targets | Features |
-|-------|------|---------|----------|
-| `avisblue-main` | Bazzite (Mesa) | enviada-nb, btecnb-vona | Dev + ROCm |
-| `avisblue-nvidia-gaming` | Bazzite-NVIDIA | wueesixx-pc, elgorrion-pc | Gaming + Dev + CUDA |
+| Image | Base | Features |
+|-------|------|----------|
+| `avisblue-main` | Bazzite (Mesa) | Dev + ROCm |
+| `avisblue-nvidia-gaming` | Bazzite-NVIDIA | Gaming + Dev + CUDA |
 
 ## Installation
 
@@ -36,7 +36,7 @@ brew install chezmoi starship direnv
 brew install bat eza fd ripgrep git-delta gh glab fzf
 
 # 3. Apply dotfiles
-chezmoi init --apply --ssh elgorrion
+chezmoi init --apply --ssh <your-github-username>
 
 # 4. Install Claude Code
 curl -fsSL https://claude.ai/install.sh | sh

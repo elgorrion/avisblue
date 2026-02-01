@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # rocm.sh - ROCm role for AMD compute (inference only)
-# Target: btecnb-vona (AMD Radeon 780M - RDNA3)
 
 set -euo pipefail
 

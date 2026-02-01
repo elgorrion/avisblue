@@ -186,28 +186,17 @@ Fedora Kinoite includes the `kde-desktop` package group plus ostree-specific add
 
 ## Layer 3a: avisblue-main
 
-**Removes (strip-bazzite.sh):**
+**Removes (10-cleanup-main.sh):**
 
 | Package | Reason |
 |---------|--------|
 | steamdeck-kde-presets | Gaming themes |
-
-**Removes (strip-upstream.sh):**
-
-| Package | Reason |
-|---------|--------|
-| fcitx5-chinese-addons | Not needed |
-| fcitx5-configtool | Not needed |
-| fcitx5-gtk | GTK integration |
-| fcitx5-hangul | Korean IME |
-| fcitx5-libthai | Thai IME |
-| fcitx5-mozc | Japanese IME |
-| fcitx5-qt | Qt integration |
-| fcitx5-sayura | Sinhala IME |
-| fcitx5-unikey | Vietnamese IME |
+| gnome-disk-utility | GTK app, replaced by partitionmanager |
+| ptyxis | GTK terminal, replaced by konsole |
+| fcitx5-* (all variants) | IME not needed (English-only fleet) |
 | kcm-fcitx5 | Fcitx5 settings |
 
-**Removes (strip-flatpaks.sh):**
+**Removes Flatpaks (10-cleanup-main.sh):**
 
 | Flatpak | Reason |
 |---------|--------|
@@ -217,7 +206,7 @@ Fedora Kinoite includes the `kde-desktop` package group plus ostree-specific add
 | org.kde.haruna | Not needed |
 | org.kde.filelight | In base already |
 
-**Adds (kde-apps.sh):**
+**Adds (30-kde-apps.sh):**
 
 | Package | Purpose |
 |---------|---------|
@@ -227,9 +216,10 @@ Fedora Kinoite includes the `kde-desktop` package group plus ostree-specific add
 | ark | Archive manager |
 | kcalc | Calculator |
 | spectacle | Screenshots |
-| partitionmanager | Disk partitioning |
+| partitionmanager | Disk partitioning (replaces gnome-disk-utility) |
 | kdeconnectd | Phone integration |
-| konsole | Terminal (Bazzite removes it) |
+| konsole | Terminal (Bazzite removes, we re-add) |
+| chromium | Web browser (Qt/Chromium, replaces Firefox GTK) |
 
 ---
 
@@ -241,7 +231,7 @@ Same as avisblue-main, except:
 
 | Package | Reason |
 |---------|--------|
-| steamdeck-kde-presets | Gaming themes (kept) |
+| steamdeck-kde-presets | Gaming themes (kept for gaming image) |
 
 ---
 
@@ -269,7 +259,7 @@ Same as avisblue-main, except:
 - kdeplasma-addons
 - polkit-kde
 
-#### KDE Apps (Added by avisblue)
+#### KDE Apps (Added by 30-kde-apps.sh)
 - kate (text editor)
 - okular (documents)
 - gwenview (images)
@@ -278,6 +268,8 @@ Same as avisblue-main, except:
 - spectacle (screenshots)
 - partitionmanager (disks)
 - kdeconnectd (phone sync)
+- konsole (terminal, re-added after Bazzite removes it)
+- chromium (browser)
 
 #### KDE Apps (From Fedora)
 - dolphin (files)
@@ -337,8 +329,8 @@ Same as avisblue-main, except:
 | konsole | Bazzite (ptyxis instead) |
 | kcharselect | Bazzite |
 | kde-partitionmanager | Bazzite (we re-add as partitionmanager) |
-| fcitx5-* | strip-upstream.sh |
-| kcm-fcitx5 | strip-upstream.sh |
+| fcitx5-* | 10-cleanup-*.sh |
+| kcm-fcitx5 | 10-cleanup-*.sh |
 
 ---
 
@@ -348,7 +340,7 @@ Same as avisblue-main, except:
 |----------|-------|-------|
 | Plasma Core | 7 | Desktop, workspace, sddm |
 | Plasma Components | ~20 | VPN, bluetooth, widgets |
-| KDE Apps (avisblue) | 9 | kate, okular, gwenview, konsole, etc. |
+| KDE Apps (avisblue) | 10 | kate, okular, gwenview, ark, kcalc, spectacle, partitionmanager, kdeconnectd, konsole, chromium |
 | KDE Apps (Fedora) | 2 | dolphin, kwrite |
 | KDE System | 7 | kinfocenter, kscreen, etc. |
 | KDE Integration | 10 | kio, kde-connect, etc. |
@@ -366,7 +358,7 @@ Remaining GTK apps (no Qt alternatives):
 |---------|--------|--------|
 | firewall-config | Fedora | No good Qt alternative |
 
-### Removed GTK Apps (strip-upstream.sh)
+### Removed GTK Apps (10-cleanup-*.sh)
 
 | Package | Replacement |
 |---------|-------------|

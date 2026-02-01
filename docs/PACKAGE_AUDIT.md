@@ -349,38 +349,35 @@ Base atomic KDE Plasma desktop. Includes:
 
 **Base:** Bazzite (Mesa)
 
-### Removed by strip-bazzite.sh
+### Removed by 10-cleanup-main.sh
 
 | Category | Packages |
 |----------|----------|
 | Gaming | steam, lutris, gamescope, gamescope-shaders, mangohud, vkBasalt, umu-launcher, winetricks, faugus-launcher, gamemode |
 | Handheld | hhd, hhd-ui, adjustor, steam-patch, jupiter-fan-control, jupiter-hw-support, steamdeck-dsp, steamdeck-kde-presets, sdgyrodsu, decky-loader |
-| Optional | waydroid, sunshine, input-remapper |
-| ROCm | rocm-hip, rocm-opencl, rocm-clinfo, rocm-smi (re-added later) |
+| Streaming | waydroid, cage, wlr-randr, sunshine, input-remapper |
+| ROCm | rocm-hip, rocm-opencl, rocm-clinfo, rocm-smi (re-added by 50-rocm.sh) |
 | 32-bit | *.i686 |
-
-### Removed by strip-upstream.sh
-
-| Category | Packages |
-|----------|----------|
 | Duplicates | htop, nvtop |
-| Hardware | iptsd, libwacom-surface, fw-ectool, fw-fanctrl, framework-system, ryzenadj, xwiimote-ng, oversteer-udev |
-| Features | Sunshine, webapp-manager, bazzite-portal, ScopeBuddy, ds-inhibit, libcec, bazaar, topgrade, yad |
-| Cockpit | cockpit-networkmanager, cockpit-podman, cockpit-selinux, cockpit-system, cockpit-files, cockpit-storaged |
+| Hardware | iptsd, fw-ectool, fw-fanctrl, framework-system, ryzenadj, xwiimote-ng, oversteer-udev |
+| Features | bazzite-portal, ScopeBuddy, ds-inhibit, bazaar, krunner-bazaar, topgrade, yad |
+| GTK Apps | gnome-disk-utility, ptyxis |
 | Debug | stress-ng, powerstat, f3 |
 | IME | fcitx5-chinese-addons, fcitx5-configtool, fcitx5-gtk, fcitx5-hangul, fcitx5-libthai, fcitx5-mozc, fcitx5-qt, fcitx5-sayura, fcitx5-unikey, kcm-fcitx5 |
 | Fonts | google-noto-sans-balinese-fonts, google-noto-sans-javanese-fonts, google-noto-sans-sundanese-fonts |
 | Shells | fish, zsh |
 | CLI | glow, gum |
 
-### Removed by strip-flatpaks.sh
+**Note:** Cockpit base packages are **KEPT** for fleet management (cockpit-system, cockpit-podman, cockpit-storaged, cockpit-networkmanager, cockpit-files, cockpit-selinux).
+
+### Removed Flatpaks (10-cleanup-main.sh)
 
 | Type | Flatpaks |
 |------|----------|
 | GTK | org.mozilla.firefox, com.github.Matoking.protontricks, com.vysp3r.ProtonPlus, com.ranfdev.DistroShelf, io.github.flattool.Warehouse, com.github.tchx84.Flatseal |
 | Qt | org.kde.gwenview, org.kde.okular, org.kde.kcalc, org.kde.haruna, org.kde.filelight |
 
-### Added by kde-apps.sh
+### Added by 30-kde-apps.sh
 
 | Package | Purpose |
 |---------|---------|
@@ -392,20 +389,22 @@ Base atomic KDE Plasma desktop. Includes:
 | spectacle | Screenshot |
 | partitionmanager | Disk partitioning |
 | kdeconnectd | Phone integration |
+| konsole | Terminal (Bazzite removes, we re-add) |
+| chromium | Web browser |
 
-### Added by dev-tools.sh
+### Added by 40-dev-tools.sh
 
 | Package | Purpose |
 |---------|---------|
 | code | VS Code |
 | podman-docker | Docker compat |
-| docker-compose | Compose |
+| podman-compose | Compose (pure podman) |
 | qemu-kvm | KVM |
 | libvirt | Virtualization |
-| virt-manager | VM GUI |
-| virt-viewer | VM viewer |
+| cockpit-machines | VM management (web UI) |
+| cockpit-ostree | OSTree management (web UI) |
 
-### Added by rocm.sh
+### Added by 50-rocm.sh
 
 | Package | Purpose |
 |---------|---------|
@@ -423,34 +422,41 @@ Base atomic KDE Plasma desktop. Includes:
 
 **Base:** Bazzite-NVIDIA
 
-### Removed by strip-bazzite-handheld.sh
+### Removed by 10-cleanup-nvidia-gaming.sh
 
 | Category | Packages |
 |----------|----------|
 | Handheld | hhd, hhd-ui, adjustor, steam-patch, jupiter-fan-control, jupiter-hw-support, steamdeck-dsp, steamdeck-kde-presets, sdgyrodsu, decky-loader |
-| Optional | waydroid, sunshine |
-| ROCm | rocm-hip, rocm-opencl, rocm-clinfo, rocm-smi |
+| Streaming | waydroid, cage, wlr-randr, sunshine |
+| ROCm | rocm-hip, rocm-opencl, rocm-clinfo, rocm-smi (NVIDIA uses CUDA) |
+| Duplicates | htop, nvtop |
+| Hardware | iptsd, fw-ectool, fw-fanctrl, framework-system, ryzenadj, xwiimote-ng, oversteer-udev |
+| Features | bazzite-portal, ds-inhibit, bazaar, krunner-bazaar, topgrade, yad |
+| GTK Apps | gnome-disk-utility, ptyxis |
+| Debug | stress-ng, powerstat, f3 |
+| IME | fcitx5-* (all variants), kcm-fcitx5 |
+| Fonts | google-noto-sans-balinese-fonts, google-noto-sans-javanese-fonts, google-noto-sans-sundanese-fonts |
+| Shells | fish, zsh |
+| CLI | glow, gum |
 
-### Removed by strip-upstream.sh
-(Same as avisblue-main)
+**Note:** Gaming packages (steam, gamescope, mangohud, etc.) and ScopeBuddy are **KEPT**. Cockpit base packages are **KEPT**.
 
-### Removed by strip-flatpaks.sh
-(Same as avisblue-main)
+### Removed Flatpaks (same as avisblue-main)
 
-### Added by kde-apps.sh
-(Same as avisblue-main)
+### Added by 30-kde-apps.sh
+(Same as avisblue-main: kate, okular, gwenview, ark, kcalc, spectacle, partitionmanager, kdeconnectd, konsole, chromium)
 
-### Added by dev-tools.sh
-(Same as avisblue-main)
+### Added by 40-dev-tools.sh
+(Same as avisblue-main: code, podman-docker, podman-compose, qemu-kvm, libvirt, cockpit-machines, cockpit-ostree)
 
-### Added by gaming.sh
+### Added by 50-gaming.sh
 
 | Package | Purpose |
 |---------|---------|
 | openrgb | RGB control |
 | openrgb-udev-rules | RGB udev |
 
-### Added by cuda.sh
+### Added by 60-cuda.sh
 
 | Package | Purpose |
 |---------|---------|
@@ -481,8 +487,9 @@ Base atomic KDE Plasma desktop. Includes:
 |----------|-------|--------------|
 | Kernel | 1 | bazzite-kernel |
 | Desktop | ~50 | KDE Plasma 6, Wayland |
-| KDE Apps | 8 | kate, okular, gwenview, ark, kcalc, spectacle, partitionmanager, kdeconnectd |
-| Dev Tools | 7 | code, podman-docker, docker-compose, qemu-kvm, libvirt, virt-manager, virt-viewer |
+| KDE Apps | 10 | kate, okular, gwenview, ark, kcalc, spectacle, partitionmanager, kdeconnectd, konsole, chromium |
+| Dev Tools | 7 | code, podman-docker, podman-compose, qemu-kvm, libvirt, cockpit-machines, cockpit-ostree |
+| Cockpit | 8 | system, podman, storaged, networkmanager, files, selinux (Bazzite) + machines, ostree (added) |
 | Compute | 4 | rocm-hip, rocm-opencl, rocm-clinfo, rocm-smi |
 | System | ~30 | btop, fastfetch, vim, tailscale, distrobox, snapper, btrfs-assistant |
 | Multimedia | ~20 | PipeWire (patched), ffmpeg, codecs |
@@ -495,8 +502,9 @@ Base atomic KDE Plasma desktop. Includes:
 |----------|-------|--------------|
 | Kernel | 1 | bazzite-kernel |
 | Desktop | ~50 | KDE Plasma 6, Wayland |
-| KDE Apps | 8 | kate, okular, gwenview, ark, kcalc, spectacle, partitionmanager, kdeconnectd |
-| Dev Tools | 7 | code, podman-docker, docker-compose, qemu-kvm, libvirt, virt-manager, virt-viewer |
+| KDE Apps | 10 | kate, okular, gwenview, ark, kcalc, spectacle, partitionmanager, kdeconnectd, konsole, chromium |
+| Dev Tools | 7 | code, podman-docker, podman-compose, qemu-kvm, libvirt, cockpit-machines, cockpit-ostree |
+| Cockpit | 8 | system, podman, storaged, networkmanager, files, selinux (Bazzite) + machines, ostree (added) |
 | Gaming | ~15 | steam, lutris, gamescope, mangohud, vkBasalt, umu-launcher |
 | NVIDIA | ~10 | Proprietary drivers, nvidia-container-toolkit |
 | System | ~30 | btop, fastfetch, vim, tailscale, distrobox, snapper, btrfs-assistant |

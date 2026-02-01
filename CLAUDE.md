@@ -52,7 +52,7 @@ build_files/
 │   └── 90-finalize.sh          # Validation, cleanup, ostree seal
 └── roles/
     ├── 50-rocm.sh              # ROCm runtime (AMD compute)
-    ├── 50-gaming.sh            # OpenRGB, ProtonUp-Qt, BoxBuddy
+    ├── 50-gaming.sh            # OpenRGB only (Flatpaks post-boot)
     └── 60-cuda.sh              # nvidia-container-toolkit
 system_files/
 └── etc/sddm.conf.d/
@@ -81,7 +81,7 @@ system_files/
 - Gaming: Steam, Gamescope, MangoHud, vkBasalt (from Bazzite)
 - Gaming extras: OpenRGB
 - CUDA: nvidia-container-toolkit
-- Flatpaks: ProtonUp-Qt, BoxBuddy (Qt only)
+- Flatpaks: Post-boot via `fleet-packages-avisblue` (ProtonUp-Qt, BoxBuddy)
 
 ## Rebase
 

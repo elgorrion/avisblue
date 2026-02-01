@@ -74,11 +74,10 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@v3
+        uses: sigstore/cosign-installer@v4
 
       - name: Sign images
         env:
-          COSIGN_EXPERIMENTAL: "true"
           REGISTRY: ${{ env.IMAGE_REGISTRY }}
           SHA: ${{ github.sha }}
         run: |

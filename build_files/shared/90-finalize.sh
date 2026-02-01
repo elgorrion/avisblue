@@ -13,13 +13,24 @@ if ! rpm -qa > /dev/null 2>&1; then
     exit 1
 fi
 
-# Verify critical packages still present
+# Verify critical packages still present and not corrupted
 # Note: Only check packages in base Bazzite, not ones we add (like konsole)
 CRITICAL_PACKAGES=(plasma-desktop kwin kate systemd)
 for pkg in "${CRITICAL_PACKAGES[@]}"; do
     if ! rpm -q "$pkg" > /dev/null 2>&1; then
         echo "ERROR: Critical package $pkg was removed!"
         exit 1
+    fi
+done
+
+# Verify critical package files aren't corrupted (check config and binary files only)
+echo "Verifying critical package integrity..."
+for pkg in "${CRITICAL_PACKAGES[@]}"; do
+    # rpm --verify returns non-zero if files modified/missing, filter to only failures
+    # Ignore config files (c), docs (d), and ghost files (g) - only care about binaries
+    if rpm --verify "$pkg" 2>/dev/null | grep -v "^\.\.\.\.\.\.\.\.\.  [cdg]" | grep -q "^.M\|^missing"; then
+        echo "WARNING: Package $pkg has modified or missing files"
+        rpm --verify "$pkg" 2>/dev/null | grep -v "^\.\.\.\.\.\.\.\.\.  [cdg]" | head -5
     fi
 done
 echo "Package database valid, critical packages present"

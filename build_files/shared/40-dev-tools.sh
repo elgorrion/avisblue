@@ -11,8 +11,13 @@ echo "Adding VSCode repository..."
 MS_KEY_URL="https://packages.microsoft.com/keys/microsoft.asc"
 for attempt in 1 2 3; do
     if rpm --import "$MS_KEY_URL" 2>&1; then
-        echo "Microsoft GPG key imported successfully"
-        break
+        # Verify the key was actually imported (Microsoft key ID starts with BE1229CF)
+        if rpm -q gpg-pubkey --qf '%{NAME}-%{VERSION}\n' | grep -q "BE1229CF"; then
+            echo "Microsoft GPG key imported and verified"
+            break
+        else
+            echo "WARNING: rpm --import succeeded but key not found in keyring"
+        fi
     fi
     echo "Attempt $attempt failed, retrying in 2s..."
     sleep 2

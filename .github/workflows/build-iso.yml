@@ -33,7 +33,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build ISO
-        uses: jasonn3/build-container-installer@main
+        uses: jasonn3/build-container-installer@v1
         with:
           image_name: ${{ matrix.image }}
           image_repo: ${{ env.IMAGE_REGISTRY }}
@@ -43,7 +43,7 @@ jobs:
           iso_name: ${{ matrix.image }}.iso
 
       - name: Upload ISO
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.image }}-iso
           path: ${{ matrix.image }}.iso

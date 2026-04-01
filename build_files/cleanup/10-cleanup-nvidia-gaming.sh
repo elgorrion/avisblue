@@ -61,7 +61,13 @@ remove_packages() {
 #################################################
 
 # Handheld/HTPC - not needed for desktop gaming
+# Most handheld packages removed from Bazzite desktop images upstream (April 2026)
 HANDHELD=(
+    jupiter-sd-mounting-btrfs
+)
+
+# Handheld packages no longer in Bazzite desktop images
+HANDHELD_GONE=(
     hhd
     hhd-ui
     adjustor
@@ -72,7 +78,6 @@ HANDHELD=(
     steamdeck-kde-presets
     sdgyrodsu
     decky-loader
-    jupiter-sd-mounting-btrfs
 )
 
 # Android/Streaming - not used
@@ -219,35 +224,38 @@ echo "--- Removing RPM packages ---"
 echo "(Gaming packages are KEPT)"
 
 # STRICT: Core Bazzite packages - if missing, upstream changed significantly
-echo "[1/10] Handheld/HTPC packages (strict)..."
+echo "[1/11] Handheld/HTPC packages (strict)..."
 remove_packages strict "${HANDHELD[@]}"
 
+echo "[2/11] Handheld packages removed upstream..."
+remove_packages lenient "${HANDHELD_GONE[@]}"
+
 # LENIENT: May vary between Bazzite versions
-echo "[2/10] Streaming/Android packages..."
+echo "[3/11] Streaming/Android packages..."
 remove_packages lenient "${STREAMING[@]}"
 
-echo "[3/10] ROCm packages (NVIDIA uses CUDA)..."
+echo "[4/11] ROCm packages (NVIDIA uses CUDA)..."
 remove_packages lenient "${ROCM[@]}"
 
-echo "[4/10] Duplicate tools..."
+echo "[5/11] Duplicate tools..."
 remove_packages lenient "${DUPLICATES[@]}"
 
-echo "[5/10] Unused hardware support..."
+echo "[6/11] Unused hardware support..."
 remove_packages lenient "${HARDWARE[@]}"
 
-echo "[6/10] Unused features..."
+echo "[7/11] Unused features..."
 remove_packages lenient "${FEATURES[@]}"
 
-echo "[7/10] GTK apps..."
+echo "[8/11] GTK apps..."
 remove_packages lenient "${GTK_APPS[@]}"
 
-echo "[8/10] Debug tools..."
+echo "[9/11] Debug tools..."
 remove_packages lenient "${DEBUG[@]}"
 
-echo "[9/10] IME packages..."
+echo "[10/11] IME packages..."
 remove_packages lenient "${IME[@]}"
 
-echo "[10/10] Fonts, shells, CLI tools..."
+echo "[11/11] Fonts, shells, CLI tools..."
 remove_packages lenient "${FONTS[@]}" "${SHELLS[@]}" "${CLI_TOOLS[@]}"
 
 echo ""

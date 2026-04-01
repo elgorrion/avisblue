@@ -6,6 +6,7 @@ set -euo pipefail
 echo "=== Installing ROCm role packages ==="
 
 # ROCm packages for inference (minimal, no dev headers/compilers)
+# TODO: Migrate rocm-smi -> amd-smi when available on Fedora stable (AMD EOL for rocm-smi: Q2 2026)
 echo "Installing ROCm runtime packages..."
 dnf5 -y install \
     rocm-hip \

@@ -39,10 +39,6 @@ echo "Package database valid, critical packages present"
 echo "Cleaning package caches..."
 dnf5 clean all
 
-# Remove build context
-echo "Removing build context..."
-rm -rf /ctx
-
 # Remove temporary files
 echo "Removing temporary files..."
 rm -rf /tmp/* /var/tmp/*

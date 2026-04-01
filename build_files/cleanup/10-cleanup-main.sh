@@ -65,15 +65,26 @@ GAMING=(
     mangohud
     vkBasalt
     umu-launcher
-    winetricks
-    faugus-launcher
-    gamemode
     libobs_vkcapture
     libobs_glcapture
 )
 
+# Gaming packages removed from Bazzite desktop images upstream (April 2026)
+GAMING_GONE=(
+    winetricks
+    faugus-launcher
+    gamemode
+)
+
 # Handheld/HTPC - not needed for desktop
+# Most handheld packages removed from Bazzite desktop images upstream (April 2026)
 HANDHELD=(
+    steamdeck-kde-presets-desktop
+    jupiter-sd-mounting-btrfs
+)
+
+# Handheld packages no longer in Bazzite desktop images
+HANDHELD_GONE=(
     hhd
     hhd-ui
     adjustor
@@ -82,10 +93,8 @@ HANDHELD=(
     jupiter-hw-support
     steamdeck-dsp
     steamdeck-kde-presets
-    steamdeck-kde-presets-desktop
     sdgyrodsu
     decky-loader
-    jupiter-sd-mounting-btrfs
 )
 
 # Android/Streaming - not used
@@ -237,41 +246,47 @@ echo ""
 echo "--- Removing RPM packages ---"
 
 # STRICT: Core Bazzite packages - if missing, upstream changed significantly
-echo "[1/12] Gaming packages (strict)..."
+echo "[1/14] Gaming packages (strict)..."
 remove_packages strict "${GAMING[@]}"
 
-echo "[2/12] Handheld/HTPC packages (strict)..."
+echo "[2/14] Gaming packages removed upstream..."
+remove_packages lenient "${GAMING_GONE[@]}"
+
+echo "[3/14] Handheld/HTPC packages (strict)..."
 remove_packages strict "${HANDHELD[@]}"
 
+echo "[4/14] Handheld packages removed upstream..."
+remove_packages lenient "${HANDHELD_GONE[@]}"
+
 # LENIENT: May vary between Bazzite versions
-echo "[3/12] Streaming/Android packages..."
+echo "[5/14] Streaming/Android packages..."
 remove_packages lenient "${STREAMING[@]}"
 
-echo "[4/12] ROCm packages (re-added later)..."
+echo "[6/14] ROCm packages (re-added later)..."
 remove_packages lenient "${ROCM[@]}"
 
-echo "[5/12] 32-bit libraries..."
+echo "[7/14] 32-bit libraries..."
 remove_packages lenient "${LIB32[@]}"
 
-echo "[6/12] Duplicate tools..."
+echo "[8/14] Duplicate tools..."
 remove_packages lenient "${DUPLICATES[@]}"
 
-echo "[7/12] Unused hardware support..."
+echo "[9/14] Unused hardware support..."
 remove_packages lenient "${HARDWARE[@]}"
 
-echo "[8/12] Unused features..."
+echo "[10/14] Unused features..."
 remove_packages lenient "${FEATURES[@]}"
 
-echo "[9/12] GTK apps..."
+echo "[11/14] GTK apps..."
 remove_packages lenient "${GTK_APPS[@]}"
 
-echo "[10/12] Debug tools..."
+echo "[12/14] Debug tools..."
 remove_packages lenient "${DEBUG[@]}"
 
-echo "[11/12] IME packages..."
+echo "[13/14] IME packages..."
 remove_packages lenient "${IME[@]}"
 
-echo "[12/12] Fonts, shells, CLI tools..."
+echo "[14/14] Fonts, shells, CLI tools..."
 remove_packages lenient "${FONTS[@]}" "${SHELLS[@]}" "${CLI_TOOLS[@]}"
 
 echo ""

@@ -28,12 +28,13 @@ gh run watch <run-id>
 
 ## Architecture
 
-- **Base:** Bazzite (bazzite:stable / bazzite-nvidia:stable)
+- **Base:** Bazzite on Fedora 43 (bazzite:stable / bazzite-nvidia:stable)
 - **Kernel:** bazzite-kernel (HDR, winesync, LAVD/BORE schedulers)
-- **Desktop:** KDE Plasma 6 (pure Qt - no GTK apps)
+- **Desktop:** KDE Plasma 6.6 (pure Qt - no GTK apps)
 - **Display:** Wayland-only (SDDM + kwin_wayland, XWayland for legacy apps)
 - **Updates:** Automatic via ublue-update
 - **Management:** Cockpit web console on :9090
+- **Build pattern:** `FROM scratch AS ctx` with bind mounts, `bootc container lint` validation
 
 ## File Structure
 
@@ -49,7 +50,7 @@ build_files/
 │   ├── 25-wayland-only.sh      # Remove X11 sessions, Wayland-only
 │   ├── 30-kde-apps.sh          # KDE RPMs + Chromium browser
 │   ├── 40-dev-tools.sh         # VSCode, podman, libvirt, Cockpit
-│   └── 90-finalize.sh          # Validation, cleanup, ostree seal
+│   └── 90-finalize.sh          # Validation, cleanup
 └── roles/
     ├── 50-rocm.sh              # ROCm runtime (AMD compute)
     ├── 50-gaming.sh            # OpenRGB only (Flatpaks post-boot)

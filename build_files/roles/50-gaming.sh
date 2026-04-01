@@ -8,17 +8,13 @@ echo "=== Installing gaming extras ==="
 
 # Note: Steam, Gamescope, MangoHud, vkBasalt already in Bazzite-NVIDIA
 
-# Enable OpenRGB COPR
-echo "Enabling OpenRGB repository..."
-dnf5 -y copr enable kylegospo/openrgb || true
-
-# Install OpenRGB
+# Install OpenRGB (available in Fedora repos since F43)
 echo "Installing OpenRGB..."
 dnf5 -y install \
     openrgb \
     openrgb-udev-rules
 
-# Create openrgb group for i2c access
-getent group openrgb || groupadd openrgb
+# Create openrgb group for i2c access via sysusers.d (bootc-compatible)
+echo 'g openrgb - -' > /usr/lib/sysusers.d/openrgb.conf
 
 echo "=== Gaming extras complete ==="

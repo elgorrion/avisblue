@@ -21,9 +21,15 @@ podman build -f Containerfile.nvidia-gaming -t avisblue-nvidia-gaming:local .
 # Trigger GitHub Actions build
 gh workflow run build.yml
 
-# Check build status
+# Trigger release (builds ISOs + creates GitHub Release)
+gh workflow run release.yml
+
+# Check build/release status
 gh run list --repo elgorrion/avisblue
 gh run watch <run-id>
+
+# List releases
+gh release list
 ```
 
 ## Architecture
@@ -59,6 +65,7 @@ system_files/
 └── etc/sddm.conf.d/
     └── 10-wayland.conf         # SDDM Wayland + kwin_wayland
 .github/workflows/build.yml     # CI/CD (build + cosign)
+.github/workflows/release.yml   # ISO build + GitHub Release (30-day retention)
 ```
 
 ## Packages

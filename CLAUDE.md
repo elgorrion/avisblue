@@ -104,12 +104,14 @@ system_files/
 
 ## Rebase
 
+Images are signed with cosign (key at `/etc/pki/containers/avisblue.pub`); `--enforce-container-sigpolicy` enforces verification.
+
 ```bash
 # For AMD/Intel GPU
-sudo bootc switch ghcr.io/elgorrion/avisblue-main:latest
+sudo bootc switch --enforce-container-sigpolicy ghcr.io/elgorrion/avisblue-main:latest
 
 # For NVIDIA GPU
-sudo bootc switch ghcr.io/elgorrion/avisblue-nvidia-gaming:latest
+sudo bootc switch --enforce-container-sigpolicy ghcr.io/elgorrion/avisblue-nvidia-gaming:latest
 ```
 
 ## Related

@@ -85,14 +85,15 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@v3
+        uses: sigstore/cosign-installer@v4
 
       - name: Sign images
         env:
+          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
           REGISTRY: ${{ env.IMAGE_REGISTRY }}
           SHA: ${{ github.sha }}
         run: |
           for image in avisblue-main avisblue-nvidia-gaming; do
-            cosign sign --yes "${REGISTRY}/${image}:latest"
-            cosign sign --yes "${REGISTRY}/${image}:${SHA}"
+            cosign sign --key env://COSIGN_PRIVATE_KEY --yes "${REGISTRY}/${image}:latest"
+            cosign sign --key env://COSIGN_PRIVATE_KEY --yes "${REGISTRY}/${image}:${SHA}"
           done

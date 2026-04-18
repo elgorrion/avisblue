@@ -17,12 +17,14 @@ Download ISO from [Releases](https://github.com/elgorrion/avisblue/releases) and
 
 ### Rebase from Fedora Atomic
 
+Both images are signed with [cosign](https://docs.sigstore.dev/cosign/) using the public key shipped at `/etc/pki/containers/avisblue.pub` inside the image. The `--enforce-container-sigpolicy` flag below makes `bootc` refuse to deploy an image whose signature doesn't verify against that key.
+
 ```bash
 # For AMD/Intel GPU
-sudo bootc switch ghcr.io/elgorrion/avisblue-main:latest
+sudo bootc switch --enforce-container-sigpolicy ghcr.io/elgorrion/avisblue-main:latest
 
 # For NVIDIA GPU + Gaming
-sudo bootc switch ghcr.io/elgorrion/avisblue-nvidia-gaming:latest
+sudo bootc switch --enforce-container-sigpolicy ghcr.io/elgorrion/avisblue-nvidia-gaming:latest
 ```
 
 ## Post-Install Setup

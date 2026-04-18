@@ -181,9 +181,6 @@ mv "${DST_POLICY}.new" "$DST_POLICY"
 echo "Merged policy.json written to $DST_POLICY. Top-level docker transports:"
 jq '.transports.docker | keys' "$DST_POLICY"
 
-echo "Merged policy.json. Top-level docker transports:"
-jq '.transports.docker | keys' "$POLICY"
-
 #####################################################
 # 5. Enable avisblue-flatpak-manager.service
 #    Service unit ships via system_files; we only need to enable it here.

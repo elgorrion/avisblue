@@ -19,3 +19,7 @@ Thumbs.db
 
 # Local settings
 .claude/settings.local.json
+
+# Internal/private workspace - planning docs, audits, fleet-specific notes
+# Lives in this repo for context, never reaches the public remote
+internal/

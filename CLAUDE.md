@@ -56,14 +56,25 @@ build_files/
 │   ├── 25-wayland-only.sh      # Remove X11 sessions, Wayland-only
 │   ├── 30-kde-apps.sh          # KDE RPMs + Chromium browser
 │   ├── 40-dev-tools.sh         # VSCode, podman, libvirt, Cockpit
+│   ├── 80-avisblue.sh          # Identity, signing-policy merge, service enablement
 │   └── 90-finalize.sh          # Validation, cleanup
 └── roles/
     ├── 50-rocm.sh              # ROCm runtime (AMD compute)
-    ├── 50-gaming.sh            # OpenRGB only (Flatpaks post-boot)
+    ├── 50-gaming.sh            # OpenRGB only (Flatpaks first-boot)
     └── 60-cuda.sh              # nvidia-container-toolkit
 system_files/
-└── etc/sddm.conf.d/
-    └── 10-wayland.conf         # SDDM Wayland + kwin_wayland
+├── etc/
+│   ├── cockpit/cockpit.conf
+│   ├── containers/registries.d/elgorrion.yaml   # sigstore lookup for ghcr.io/elgorrion
+│   ├── locale.conf
+│   ├── pki/containers/avisblue.pub              # signing pubkey shipped to image
+│   └── sddm.conf.d/10-wayland.conf
+└── usr/
+    ├── lib/systemd/system/avisblue-flatpak-manager.service
+    ├── libexec/avisblue-flatpak-manager         # idempotent flatpak installer
+    └── share/avisblue/                          # flatpak lists per flavor
+        ├── flatpaks-main.list
+        └── flatpaks-nvidia-gaming.list
 .github/workflows/build.yml     # CI/CD (build + cosign)
 .github/workflows/release.yml   # ISO build + GitHub Release (30-day retention)
 ```
@@ -89,7 +100,7 @@ system_files/
 - Gaming: Steam, Gamescope, MangoHud, vkBasalt (from Bazzite)
 - Gaming extras: OpenRGB
 - CUDA: nvidia-container-toolkit
-- Flatpaks: Post-boot via `fleet-packages-avisblue` (ProtonUp-Qt, ScopeBuddy)
+- Flatpaks: ProtonUp-Qt + ScopeBuddy installed first-boot by `avisblue-flatpak-manager.service` (list at `/usr/share/avisblue/flatpaks-nvidia-gaming.list`)
 
 ## Rebase
 

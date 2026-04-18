@@ -1,0 +1,6 @@
+# Avisblue nvidia-gaming image - gaming Flatpaks installed by avisblue-flatpak-manager
+# Modify this list and rebuild to change first-boot Flatpak set; the version-hash
+# sentinel ensures install runs again only when the effective ref list changes.
+
+net.davidotek.pupgui2
+io.github.rfrench3.scopebuddy-gui

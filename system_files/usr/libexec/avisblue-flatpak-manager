@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+# avisblue-flatpak-manager
+#
+# Idempotent flatpak installer. Reads /usr/share/avisblue/flatpaks-${flavor}.list
+# and installs each ref via flatpak. Skips work if the list hasn't changed since
+# the last successful run (sha256 sentinel in /var/lib/avisblue/).
+#
+# Triggered by avisblue-flatpak-manager.service on every boot after network-online.
+
+set -euo pipefail
+
+STATE_DIR=/var/lib/avisblue
+IMAGE_INFO=/usr/share/ublue-os/image-info.json
+
+mkdir -p "$STATE_DIR"
+
+if [[ ! -f "$IMAGE_INFO" ]]; then
+    echo "ERROR: $IMAGE_INFO not found; cannot determine image flavor."
+    exit 1
+fi
+
+if ! command -v jq >/dev/null 2>&1; then
+    echo "ERROR: jq is required but not installed."
+    exit 1
+fi
+
+FLAVOR=$(jq -r '.["image-flavor"]' "$IMAGE_INFO")
+LIST="/usr/share/avisblue/flatpaks-${FLAVOR}.list"
+
+if [[ ! -f "$LIST" ]]; then
+    echo "No flatpak list at $LIST for flavor=${FLAVOR}; nothing to do."
+    exit 0
+fi
+
+# Extract installable refs (strip comments + blank lines) for hashing
+REFS=$(grep -vE '^\s*(#|$)' "$LIST" || true)
+
+if [[ -z "$REFS" ]]; then
+    echo "No flatpaks listed for flavor=${FLAVOR}; nothing to do."
+    exit 0
+fi
+
+# Version-gate: hash the effective ref list (not the comments)
+LIST_HASH=$(echo "$REFS" | sha256sum | cut -d' ' -f1)
+SENTINEL="$STATE_DIR/flatpaks-${FLAVOR}-${LIST_HASH}.done"
+
+if [[ -f "$SENTINEL" ]]; then
+    echo "Flatpaks already installed for ${FLAVOR} (hash ${LIST_HASH:0:12}); skipping."
+    exit 0
+fi
+
+# Ensure flathub remote exists (Bazzite ships it; defense-in-depth)
+flatpak remote-add --if-not-exists --system \
+    flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+
+echo "Installing flatpaks for flavor=${FLAVOR} (hash ${LIST_HASH:0:12}):"
+echo "$REFS"
+
+# Install each ref. Tolerate individual failures (logged, not fatal) so one
+# missing flatpak doesn't block others.
+FAILED=0
+while IFS= read -r ref; do
+    [[ -z "$ref" ]] && continue
+    echo "--> flatpak install $ref"
+    if ! flatpak install --system --noninteractive --assumeyes flathub "$ref"; then
+        echo "WARN: failed to install $ref"
+        FAILED=$((FAILED + 1))
+    fi
+done <<< "$REFS"
+
+if [[ $FAILED -gt 0 ]]; then
+    echo "$FAILED flatpak(s) failed to install; sentinel NOT created — will retry next boot."
+    exit 1
+fi
+
+touch "$SENTINEL"
+echo "All flatpaks installed for ${FLAVOR}."

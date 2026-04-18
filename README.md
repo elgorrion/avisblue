@@ -65,7 +65,7 @@ curl -fsSL https://claude.ai/install.sh | sh
 - Gaming: Steam, Gamescope, MangoHud, vkBasalt (from Bazzite)
 - Gaming extras: OpenRGB
 - CUDA: nvidia-container-toolkit
-- Flatpaks: Post-boot via `fleet-packages-avisblue` (ProtonUp-Qt, ScopeBuddy)
+- Flatpaks: ProtonUp-Qt and ScopeBuddy install automatically on first boot via `avisblue-flatpak-manager.service` (idempotent, version-gated). The list lives at `/usr/share/avisblue/flatpaks-nvidia-gaming.list`.
 
 ## Building Locally
 

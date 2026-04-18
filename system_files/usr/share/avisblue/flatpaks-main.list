@@ -1,0 +1,2 @@
+# Avisblue main image - no Flatpaks installed by default.
+# Users can install via `flatpak install --system flathub <ref>` post-boot.

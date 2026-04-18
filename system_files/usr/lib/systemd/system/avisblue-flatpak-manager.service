@@ -1,0 +1,18 @@
+[Unit]
+Description=Avisblue Flatpak Manager (idempotent installer)
+Documentation=https://github.com/elgorrion/avisblue
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/usr/libexec/avisblue-flatpak-manager
+ConditionPathExists=/usr/share/ublue-os/image-info.json
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/avisblue-flatpak-manager
+StandardOutput=journal
+StandardError=journal
+TimeoutStartSec=600
+
+[Install]
+WantedBy=multi-user.target

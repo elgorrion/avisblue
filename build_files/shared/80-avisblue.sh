@@ -122,9 +122,11 @@ cat > /usr/share/ublue-os/image-info.json <<EOF
 EOF
 
 #####################################################
-# 4. Merge ghcr.io/elgorrion entry into Bazzite's policy.json
-#    Bazzite ships /usr/etc/containers/policy.json via ublue-os-signing.
-#    We add our entry without disturbing existing ublue-os/RedHat/quay rules.
+# 4. Merge ghcr.io/elgorrion entry into the inherited policy.json
+#    ublue-os-signing has shipped policy.json at both /etc/containers/ and
+#    /usr/etc/containers/ over time. Read from wherever it exists; always
+#    write the merged result to /etc/containers/ so it takes precedence at
+#    runtime regardless of where the inherited copy lives.
 #####################################################
 
 echo "--- Merging policy.json ---"
@@ -135,32 +137,49 @@ if ! command -v jq >/dev/null 2>&1; then
     dnf5 -y install jq
 fi
 
-POLICY=/usr/etc/containers/policy.json
+# Locate inherited policy.json
+SRC_POLICY=""
+for candidate in /etc/containers/policy.json /usr/etc/containers/policy.json; do
+    if [[ -f "$candidate" ]]; then
+        SRC_POLICY="$candidate"
+        break
+    fi
+done
 
-if [[ ! -f "$POLICY" ]]; then
-    echo "ERROR: $POLICY not found. Expected from inherited ublue-os-signing package."
-    echo "Listing /usr/etc/containers/ for diagnosis:"
-    ls -la /usr/etc/containers/ || true
+if [[ -z "$SRC_POLICY" ]]; then
+    echo "ERROR: no policy.json found in /etc/containers/ or /usr/etc/containers/"
+    echo "Diagnostic listing:"
+    ls -la /etc/containers/ 2>/dev/null || echo "  (no /etc/containers)"
+    ls -la /usr/etc/containers/ 2>/dev/null || echo "  (no /usr/etc/containers)"
     exit 1
 fi
 
-# Add our entry. Assignment, not replacement of the parent object — preserves all other entries.
+echo "Using inherited policy.json from: $SRC_POLICY"
+
+DST_POLICY=/etc/containers/policy.json
+mkdir -p /etc/containers
+
+# Add our entry. Assignment, not replacement of the parent object — preserves
+# all other entries (ublue-os, RedHat, quay toolbx, catch-all).
 jq '.transports.docker["ghcr.io/elgorrion"] = [
     {
         "type": "sigstoreSigned",
         "keyPath": "/etc/pki/containers/avisblue.pub",
         "signedIdentity": {"type": "matchRepoDigestOrExact"}
     }
-]' "$POLICY" > "$POLICY.new"
+]' "$SRC_POLICY" > "${DST_POLICY}.new"
 
-# Validate the merged JSON before committing
-if ! jq empty "$POLICY.new"; then
+# Validate before committing
+if ! jq empty "${DST_POLICY}.new"; then
     echo "ERROR: merged policy.json is not valid JSON"
-    rm -f "$POLICY.new"
+    rm -f "${DST_POLICY}.new"
     exit 1
 fi
 
-mv "$POLICY.new" "$POLICY"
+mv "${DST_POLICY}.new" "$DST_POLICY"
+
+echo "Merged policy.json written to $DST_POLICY. Top-level docker transports:"
+jq '.transports.docker | keys' "$DST_POLICY"
 
 echo "Merged policy.json. Top-level docker transports:"
 jq '.transports.docker | keys' "$POLICY"

@@ -85,7 +85,9 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@v4
+        # sigstore/cosign-installer does not ship a floating major-version tag;
+        # pin to the latest specific v4.x. Bump explicitly when newer is needed.
+        uses: sigstore/cosign-installer@v4.1.1
 
       - name: Sign images
         env:

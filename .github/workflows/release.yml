@@ -90,7 +90,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      actions: read
     steps:
       - name: Set release date tag
         id: date
@@ -101,21 +100,10 @@ jobs:
         with:
           path: artifacts
 
-      - name: Download SBOM artifacts from Build workflow
-        # Only when triggered by workflow_run — workflow_dispatch has no upstream run
-        if: github.event_name == 'workflow_run'
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7.0.0
-        with:
-          pattern: sbom-*
-          path: artifacts/sboms
-          merge-multiple: true
-          run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Collect release assets
         run: |
           mkdir -p release-assets
-          find artifacts -type f \( -name '*.iso' -o -name '*.sha256sum' -o -name 'sbom-*.spdx.json' \) \
+          find artifacts -type f \( -name '*.iso' -o -name '*.sha256sum' \) \
             -exec mv {} release-assets/ \;
           echo "Assets to upload:"
           ls -lh release-assets/

@@ -127,20 +127,40 @@ jobs:
             cosign sign --key env://COSIGN_PRIVATE_KEY --yes "${REGISTRY}/${image}:${SHA}"
           done
 
+      - name: Install syft
+        uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610  # v0.24.0
+
       - name: Generate SBOM — avisblue-main
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610  # v0.24.0
+        env:
+          REGISTRY: ${{ env.IMAGE_REGISTRY }}
+          SHA: ${{ github.sha }}
+        # Drop language-package catalogers that would never match on a pure
+        # Fedora RPM + flatpak image (they still scan the whole FS, wasting
+        # 15+ min per image on ubuntu-latest runners). Keep rpm/os/file.
+        run: |
+          syft scan "${REGISTRY}/avisblue-main:${SHA}" \
+            --select-catalogers "-binary,-javascript,-python,-java,-ruby,-golang,-dotnet" \
+            --output "spdx-json=sbom-avisblue-main.spdx.json"
+
+      - name: Upload SBOM — avisblue-main
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
-          image: ${{ env.IMAGE_REGISTRY }}/avisblue-main:${{ github.sha }}
-          format: spdx-json
-          artifact-name: sbom-avisblue-main.spdx.json
-          upload-artifact: true
-          upload-artifact-retention: 30
+          name: sbom-avisblue-main
+          path: sbom-avisblue-main.spdx.json
+          retention-days: 30
 
       - name: Generate SBOM — avisblue-nvidia-gaming
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610  # v0.24.0
+        env:
+          REGISTRY: ${{ env.IMAGE_REGISTRY }}
+          SHA: ${{ github.sha }}
+        run: |
+          syft scan "${REGISTRY}/avisblue-nvidia-gaming:${SHA}" \
+            --select-catalogers "-binary,-javascript,-python,-java,-ruby,-golang,-dotnet" \
+            --output "spdx-json=sbom-avisblue-nvidia-gaming.spdx.json"
+
+      - name: Upload SBOM — avisblue-nvidia-gaming
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
-          image: ${{ env.IMAGE_REGISTRY }}/avisblue-nvidia-gaming:${{ github.sha }}
-          format: spdx-json
-          artifact-name: sbom-avisblue-nvidia-gaming.spdx.json
-          upload-artifact: true
-          upload-artifact-retention: 30
+          name: sbom-avisblue-nvidia-gaming
+          path: sbom-avisblue-nvidia-gaming.spdx.json
+          retention-days: 30

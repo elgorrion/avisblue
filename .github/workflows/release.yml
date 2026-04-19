@@ -9,31 +9,17 @@ on:
 
 env:
   IMAGE_REGISTRY: ghcr.io/${{ github.repository_owner }}
+  PUBLISH_HOST: pool-nas
+  PUBLISH_USER: avisblue-ci
+  PUBLISH_ROOT: /mnt/POOL/fleet/avisblue
   RETENTION_DAYS: 30
 
-jobs:
-  cleanup:
-    runs-on: ubuntu-latest
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'success'
-    permissions:
-      contents: write
-    steps:
-      - name: Delete releases older than 30 days
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          cutoff=$(date -d "-${RETENTION_DAYS} days" +%s)
-          gh release list --repo "$GITHUB_REPOSITORY" --limit 100 --json tagName,publishedAt \
-            --jq '.[] | select((.publishedAt | fromdateiso8601) < '"$cutoff"') | .tagName' \
-          | while read -r tag; do
-              echo "Deleting release and tag: $tag"
-              gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag
-            done
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
+jobs:
   build-iso:
-    needs: cleanup
     runs-on: ubuntu-latest
     if: >-
       github.event_name == 'workflow_dispatch' ||
@@ -72,8 +58,21 @@ jobs:
           variant: Kinoite
           iso_name: ${{ matrix.image }}.iso
 
-      - name: Generate SHA256 checksum
-        run: sha256sum ${{ matrix.image }}.iso > ${{ matrix.image }}.iso.sha256sum
+      - name: Install cosign
+        uses: sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003  # v4.1.1
+
+      - name: Checksum + sign ISO
+        env:
+          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
+          IMAGE: ${{ matrix.image }}
+        run: |
+          sha256sum "${IMAGE}.iso" > "${IMAGE}.iso.sha256"
+          cosign sign-blob \
+            --key env://COSIGN_PRIVATE_KEY \
+            --output-signature "${IMAGE}.iso.sig" \
+            --tlog-upload=false \
+            --yes \
+            "${IMAGE}.iso"
 
       - name: Upload ISO artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
@@ -81,15 +80,16 @@ jobs:
           name: ${{ matrix.image }}-iso
           path: |
             ${{ matrix.image }}.iso
-            ${{ matrix.image }}.iso.sha256sum
+            ${{ matrix.image }}.iso.sha256
+            ${{ matrix.image }}.iso.sig
           retention-days: 1
           compression-level: 0
 
-  release:
+  publish:
     needs: build-iso
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
     steps:
       - name: Set release date tag
         id: date
@@ -100,28 +100,69 @@ jobs:
         with:
           path: artifacts
 
-      - name: Collect release assets
+      - name: Stage release assets
         run: |
           mkdir -p release-assets
-          find artifacts -type f \( -name '*.iso' -o -name '*.sha256sum' \) \
+          find artifacts -type f \( -name '*.iso' -o -name '*.sha256' -o -name '*.sig' \) \
             -exec mv {} release-assets/ \;
-          echo "Assets to upload:"
+          echo "Assets staged:"
           ls -lh release-assets/
 
-      - name: Create GitHub Release
+      - name: Join tailnet
+        uses: tailscale/github-action@306e68a486fd2350f2bfc3b19fcd143891a4a2d8  # v4.1.2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      - name: Install publish SSH key
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SSH_KEY: ${{ secrets.PUBLISH_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+      - name: Publish to pool-nas
+        env:
           TAG: ${{ steps.date.outputs.tag }}
         run: |
-          # Handle same-day re-runs
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" &>/dev/null; then
-            echo "Release $TAG already exists, deleting..."
-            gh release delete "$TAG" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag
-          fi
+          set -euo pipefail
+          SSH_OPTS="-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR"
+          REMOTE="${PUBLISH_USER}@${PUBLISH_HOST}"
 
-          gh release create "$TAG" \
-            --repo "$GITHUB_REPOSITORY" \
-            --title "Avisblue $TAG" \
-            --generate-notes \
-            --latest \
-            release-assets/*
+          # shellcheck disable=SC2086  # SSH_OPTS must word-split
+          ssh $SSH_OPTS "$REMOTE" "mkdir -p '${PUBLISH_ROOT}/${TAG}'"
+
+          # shellcheck disable=SC2086
+          rsync -rtvz --partial \
+            --chmod=F644,D755 \
+            -e "ssh $SSH_OPTS" \
+            release-assets/ \
+            "${REMOTE}:${PUBLISH_ROOT}/${TAG}/"
+
+          # shellcheck disable=SC2086
+          ssh $SSH_OPTS "$REMOTE" "ln -sfn '${TAG}' '${PUBLISH_ROOT}/latest'"
+
+          echo "=== Published ==="
+          # shellcheck disable=SC2086
+          ssh $SSH_OPTS "$REMOTE" "ls -lh '${PUBLISH_ROOT}/${TAG}/' && readlink '${PUBLISH_ROOT}/latest'"
+
+      - name: Prune releases older than retention window
+        env:
+          TAG: ${{ steps.date.outputs.tag }}
+        run: |
+          set -euo pipefail
+          SSH_OPTS="-o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR"
+          REMOTE="${PUBLISH_USER}@${PUBLISH_HOST}"
+
+          # shellcheck disable=SC2086
+          ssh $SSH_OPTS "$REMOTE" "
+            set -e
+            cd '${PUBLISH_ROOT}'
+            find . -mindepth 1 -maxdepth 1 -type d -name 'v*' \
+              -not -name '${TAG}' \
+              -mtime +${RETENTION_DAYS} \
+              -print -exec rm -rf {} +
+          "

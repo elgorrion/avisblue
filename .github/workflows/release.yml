@@ -124,6 +124,12 @@ jobs:
           printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
+      - name: Verify installed SSH key
+        run: |
+          ls -la ~/.ssh/id_ed25519
+          wc -l ~/.ssh/id_ed25519
+          ssh-keygen -y -f ~/.ssh/id_ed25519 | ssh-keygen -lf -
+
       - name: Publish to pool-nas
         env:
           TAG: ${{ steps.date.outputs.tag }}
@@ -133,7 +139,7 @@ jobs:
           REMOTE="${PUBLISH_USER}@${PUBLISH_HOST}"
 
           # shellcheck disable=SC2086  # SSH_OPTS must word-split
-          ssh $SSH_OPTS "$REMOTE" "mkdir -p '${PUBLISH_ROOT}/${TAG}'"
+          ssh -v $SSH_OPTS "$REMOTE" "mkdir -p '${PUBLISH_ROOT}/${TAG}'"
 
           # shellcheck disable=SC2086
           rsync -rtvz --partial \

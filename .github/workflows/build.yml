@@ -139,7 +139,7 @@ jobs:
         # 15+ min per image on ubuntu-latest runners). Keep rpm/os/file.
         run: |
           syft scan "${REGISTRY}/avisblue-main:${SHA}" \
-            --select-catalogers "-binary,-javascript,-python,-java,-ruby,-golang,-dotnet" \
+            --select-catalogers "-binary,-javascript,-python,-java,-ruby,-golang,-dotnet,-file" \
             --output "spdx-json=sbom-avisblue-main.spdx.json"
 
       - name: Upload SBOM — avisblue-main
@@ -155,7 +155,7 @@ jobs:
           SHA: ${{ github.sha }}
         run: |
           syft scan "${REGISTRY}/avisblue-nvidia-gaming:${SHA}" \
-            --select-catalogers "-binary,-javascript,-python,-java,-ruby,-golang,-dotnet" \
+            --select-catalogers "-binary,-javascript,-python,-java,-ruby,-golang,-dotnet,-file" \
             --output "spdx-json=sbom-avisblue-nvidia-gaming.spdx.json"
 
       - name: Upload SBOM — avisblue-nvidia-gaming

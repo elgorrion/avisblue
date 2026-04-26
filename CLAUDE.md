@@ -4,12 +4,14 @@ Custom Universal Blue distro based on Bazzite.
 
 ## Images
 
-| Image | Contents |
-|-------|----------|
-| `avisblue-main` | Mesa + Dev + ROCm |
-| `avisblue-nvidia-gaming` | NVIDIA + Gaming + Dev + CUDA |
+| Image | Base | Contents |
+|-------|------|----------|
+| `avisblue-main` | `bazzite:stable` | Mesa + Dev (host) — AMD compute via containers |
+| `avisblue-nvidia-gaming` | `bazzite-nvidia-open:stable` | NVIDIA (open) + Gaming + Dev (host) — CUDA via containers |
 
 Both images include: KDE apps (RPMs), VSCode, podman, libvirt, Tailscale, Homebrew.
+
+**GPU-exposure principle (VISION §5):** the host exposes hardware (kernel modules, container toolkit, auto-CDI on NVIDIA); compute SDKs (CUDA, ROCm, PyTorch) live in workload containers. Bazzite April 2026 moved ROCm out of `bazzite:stable` into `bazzite-dx`; we follow upstream and don't add it back. `bazzite-nvidia-open` already ships `nvidia-container-toolkit` + `ublue-nvctk-cdi.service`, so no host-side CUDA tooling either.
 
 ## Build Commands
 
@@ -34,7 +36,7 @@ gh release list
 
 ## Architecture
 
-- **Base:** Bazzite on Fedora 43 (bazzite:stable / bazzite-nvidia:stable)
+- **Base:** Bazzite on Fedora 43 (`bazzite:stable` / `bazzite-nvidia-open:stable`)
 - **Kernel:** bazzite-kernel (HDR, winesync, LAVD/BORE schedulers)
 - **Desktop:** KDE Plasma 6.6 (pure Qt - no GTK apps)
 - **Display:** Wayland-only (SDDM + kwin_wayland, XWayland for legacy apps)
@@ -45,8 +47,8 @@ gh release list
 ## File Structure
 
 ```
-Containerfile.main              # Mesa + Dev + ROCm
-Containerfile.nvidia-gaming     # NVIDIA + Gaming + Dev + CUDA
+Containerfile.main              # Mesa + Dev (host)
+Containerfile.nvidia-gaming     # NVIDIA (open) + Gaming + Dev (host)
 build_files/
 ├── cleanup/
 │   ├── 10-cleanup-main.sh           # Remove gaming/handheld/bloat
@@ -59,9 +61,7 @@ build_files/
 │   ├── 80-avisblue.sh          # Identity, signing-policy merge, service enablement
 │   └── 90-finalize.sh          # Validation, cleanup
 └── roles/
-    ├── 50-rocm.sh              # ROCm runtime (AMD compute)
-    ├── 50-gaming.sh            # OpenRGB only (Flatpaks first-boot)
-    └── 60-cuda.sh              # nvidia-container-toolkit
+    └── 50-gaming.sh            # OpenRGB only (Flatpaks first-boot)
 system_files/
 ├── etc/
 │   ├── cockpit/cockpit.conf
@@ -92,14 +92,15 @@ system_files/
 
 ### avisblue-main (Mesa)
 
-- ROCm: rocm-hip, rocm-opencl, rocm-clinfo, rocm-smi
+- AMD compute: container-only (no host ROCm userspace). Host has `amdgpu` kernel module via `bazzite-kernel`; pass `/dev/kfd` + `/dev/dri` into compute containers (`docker.io/rocm/pytorch` etc.).
 - Flatpaks: NONE (zero)
 
-### avisblue-nvidia-gaming (NVIDIA)
+### avisblue-nvidia-gaming (NVIDIA, open)
 
+- NVIDIA stack inherited from `bazzite-nvidia-open`: open kernel modules, `nvidia-container-toolkit`, `ublue-nvctk-cdi.service` (auto-generates `/etc/cdi/nvidia.yaml` at boot).
+- CUDA: container-only. Use `podman run --device nvidia.com/gpu=all <image>` (NOT Docker-style `--gpus all`).
 - Gaming: Steam, Gamescope, MangoHud, vkBasalt (from Bazzite)
 - Gaming extras: OpenRGB
-- CUDA: nvidia-container-toolkit
 - Flatpaks: ProtonUp-Qt + ScopeBuddy installed first-boot by `avisblue-flatpak-manager.service` (list at `/usr/share/avisblue/flatpaks-nvidia-gaming.list`)
 
 ## Rebase

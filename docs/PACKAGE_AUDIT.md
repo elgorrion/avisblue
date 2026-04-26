@@ -4,6 +4,10 @@ Full package flow: Fedora Kinoite → Universal Blue main → Bazzite → Avisbl
 
 Generated: 2026-02-01
 
+> **2026-04-26 staleness notice.** The tables below predate two structural changes; treat the live `Containerfile.*` + `build_files/cleanup/` scripts as truth.
+> - **GPU compute is now container-only** — `build_files/roles/50-rocm.sh` and `build_files/roles/60-cuda.sh` were deleted; sections "Added by 50-rocm.sh" and "Added by 60-cuda.sh" no longer apply. Bazzite April 2026 also moved ROCm out of `bazzite:stable` into `bazzite-dx`, so the "ROCm" rows under Bazzite/Bazzite-NVIDIA layers are also out of date for current `:stable` tags.
+> - **NVIDIA base swapped** — `avisblue-nvidia-gaming` is now built from `ghcr.io/ublue-os/bazzite-nvidia-open:stable` (open kernel modules, matching the deployed fleet), not `bazzite-nvidia:stable`. The "Layer 3: Bazzite-NVIDIA" section still describes the proprietary variant; the open variant ships `nvidia-container-toolkit` + `ublue-nvctk-cdi.service` identically (shared `system_files/nvidia/shared/`).
+
 ---
 
 ## Layer 0: Fedora Kinoite (F43)

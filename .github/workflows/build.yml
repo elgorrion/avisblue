@@ -45,7 +45,7 @@ jobs:
             base: ghcr.io/ublue-os/bazzite:stable
           - image: avisblue-nvidia-gaming
             containerfile: Containerfile.nvidia-gaming
-            base: ghcr.io/ublue-os/bazzite-nvidia:stable
+            base: ghcr.io/ublue-os/bazzite-nvidia-open:stable
     steps:
       - name: Free disk space
         run: |

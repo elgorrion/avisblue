@@ -6,8 +6,10 @@ Custom [Universal Blue](https://universal-blue.org/) distro based on [Bazzite](h
 
 | Image | Base | Features |
 |-------|------|----------|
-| `avisblue-main` | Bazzite (Mesa) | Dev + ROCm |
-| `avisblue-nvidia-gaming` | Bazzite-NVIDIA | Gaming + Dev + CUDA |
+| `avisblue-main` | `bazzite:stable` (Mesa) | Dev (host); AMD compute via containers |
+| `avisblue-nvidia-gaming` | `bazzite-nvidia-open:stable` | Gaming + Dev (host); CUDA via containers |
+
+GPU compute is intentionally container-only: the host exposes hardware (kernel modules, container toolkit, auto-CDI), workloads (CUDA, ROCm, PyTorch, etc.) live in containers.
 
 ## Installation
 
@@ -58,15 +60,16 @@ curl -fsSL https://claude.ai/install.sh | sh
 
 ### avisblue-main (Mesa)
 
-- ROCm for AMD compute (rocm-hip, rocm-opencl, rocm-smi)
+- AMD compute via containers — `amdgpu` kernel module on host; user in `render`+`video` groups; pass `--device /dev/kfd --device /dev/dri` to your workload container (e.g. `docker.io/rocm/pytorch`)
 - No gaming packages (stripped)
 - Zero Flatpaks
 
-### avisblue-nvidia-gaming (NVIDIA)
+### avisblue-nvidia-gaming (NVIDIA, open kernel modules)
 
+- NVIDIA stack from `bazzite-nvidia-open:stable`: open kernel modules + `nvidia-container-toolkit` + `ublue-nvctk-cdi.service` (auto-generates `/etc/cdi/nvidia.yaml` at boot)
+- GPU in containers: `podman run --rm --device nvidia.com/gpu=all nvcr.io/nvidia/cuda:12.5.0-base-ubi9 nvidia-smi`
 - Gaming: Steam, Gamescope, MangoHud, vkBasalt (from Bazzite)
 - Gaming extras: OpenRGB
-- CUDA: nvidia-container-toolkit
 - Flatpaks: ProtonUp-Qt and ScopeBuddy install automatically on first boot via `avisblue-flatpak-manager.service` (idempotent, version-gated). The list lives at `/usr/share/avisblue/flatpaks-nvidia-gaming.list`.
 
 ## Building Locally
@@ -83,22 +86,20 @@ podman build -f Containerfile.nvidia-gaming -t avisblue-nvidia-gaming:local .
 
 ```
 Bazzite (upstream)
-├── avisblue-main
+├── avisblue-main  ← bazzite:stable
 │   ├── Strip gaming/handheld
 │   ├── Strip GTK Flatpaks
 │   ├── Fleet config + Wayland-only
 │   ├── KDE apps (RPMs)
-│   ├── Dev tools + Cockpit
-│   └── ROCm
+│   └── Dev tools + Cockpit
 │
-└── avisblue-nvidia-gaming
+└── avisblue-nvidia-gaming  ← bazzite-nvidia-open:stable
     ├── Strip handheld (keep gaming)
     ├── Strip GTK Flatpaks
     ├── Fleet config + Wayland-only
     ├── KDE apps (RPMs)
     ├── Dev tools + Cockpit
-    ├── Gaming extras
-    └── CUDA
+    └── Gaming extras (OpenRGB)
 ```
 
 ## Fleet Management

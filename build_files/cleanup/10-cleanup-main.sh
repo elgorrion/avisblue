@@ -17,7 +17,10 @@
 # What gets added back later:
 #   - kde-apps.sh: konsole, kate, okular, gwenview, ark, kcalc, spectacle, partitionmanager, kdeconnectd
 #   - dev-tools.sh: code, podman-docker, podman-compose, qemu-kvm, libvirt, cockpit-machines, cockpit-ostree
-#   - rocm.sh: rocm-hip, rocm-opencl, rocm-clinfo, rocm-smi
+#
+# AMD compute (ROCm) is intentionally NOT added: bazzite:stable dropped rocm-*
+# from its base in the April 2026 update; we follow upstream and use
+# container-based ROCm (rocm/pytorch etc.) instead.
 
 set -euo pipefail
 
@@ -104,14 +107,6 @@ STREAMING=(
     wlr-randr
     sunshine
     input-remapper
-)
-
-# ROCm - removed now, re-added by rocm.sh later
-ROCM=(
-    rocm-hip
-    rocm-opencl
-    rocm-clinfo
-    rocm-smi
 )
 
 # 32-bit libraries - not needed without gaming
@@ -259,34 +254,31 @@ echo "[4/14] Handheld packages removed upstream..."
 remove_packages lenient "${HANDHELD_GONE[@]}"
 
 # LENIENT: May vary between Bazzite versions
-echo "[5/14] Streaming/Android packages..."
+echo "[5/13] Streaming/Android packages..."
 remove_packages lenient "${STREAMING[@]}"
 
-echo "[6/14] ROCm packages (re-added later)..."
-remove_packages lenient "${ROCM[@]}"
-
-echo "[7/14] 32-bit libraries..."
+echo "[6/13] 32-bit libraries..."
 remove_packages lenient "${LIB32[@]}"
 
-echo "[8/14] Duplicate tools..."
+echo "[7/13] Duplicate tools..."
 remove_packages lenient "${DUPLICATES[@]}"
 
-echo "[9/14] Unused hardware support..."
+echo "[8/13] Unused hardware support..."
 remove_packages lenient "${HARDWARE[@]}"
 
-echo "[10/14] Unused features..."
+echo "[9/13] Unused features..."
 remove_packages lenient "${FEATURES[@]}"
 
-echo "[11/14] GTK apps..."
+echo "[10/13] GTK apps..."
 remove_packages lenient "${GTK_APPS[@]}"
 
-echo "[12/14] Debug tools..."
+echo "[11/13] Debug tools..."
 remove_packages lenient "${DEBUG[@]}"
 
-echo "[13/14] IME packages..."
+echo "[12/13] IME packages..."
 remove_packages lenient "${IME[@]}"
 
-echo "[14/14] Fonts, shells, CLI tools..."
+echo "[13/13] Fonts, shells, CLI tools..."
 remove_packages lenient "${FONTS[@]}" "${SHELLS[@]}" "${CLI_TOOLS[@]}"
 
 echo ""

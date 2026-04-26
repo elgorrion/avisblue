@@ -1,7 +1,10 @@
-# avisblue-nvidia-gaming: NVIDIA + Gaming + Dev + CUDA
-# Based on Bazzite-NVIDIA, stripped of handheld, with dev tools added.
+# avisblue-nvidia-gaming: NVIDIA (open) + Gaming + Dev
+# Based on Bazzite-NVIDIA-open, stripped of handheld, with dev tools added.
+# CUDA tooling is container-only: bazzite-nvidia-open already ships
+# nvidia-container-toolkit + ublue-nvctk-cdi.service (auto /etc/cdi/nvidia.yaml).
+# CUDA SDKs / PyTorch / etc. live in workload containers (e.g. nvcr.io/nvidia/pytorch).
 
-ARG BASE_IMAGE="ghcr.io/ublue-os/bazzite-nvidia:stable"
+ARG BASE_IMAGE="ghcr.io/ublue-os/bazzite-nvidia-open:stable"
 
 FROM scratch AS ctx
 COPY build_files /build_files
@@ -52,12 +55,6 @@ RUN --mount=type=bind,from=ctx,src=/build_files,dst=/ctx/build_files \
     --mount=type=cache,dst=/var/log \
     /ctx/build_files/roles/50-gaming.sh
 
-# 60. Install CUDA for NVIDIA compute
-RUN --mount=type=bind,from=ctx,src=/build_files,dst=/ctx/build_files \
-    --mount=type=cache,dst=/var/cache \
-    --mount=type=cache,dst=/var/log \
-    /ctx/build_files/roles/60-cuda.sh
-
 # 80. Avisblue identity + signing setup + service enablement
 RUN --mount=type=bind,from=ctx,src=/build_files,dst=/ctx/build_files \
     --mount=type=cache,dst=/var/cache \
@@ -78,4 +75,4 @@ RUN --mount=type=tmpfs,target=/run --network=none bootc container lint
 # Image metadata
 LABEL org.opencontainers.image.title="${IMAGE_NAME}"
 LABEL org.opencontainers.image.vendor="${IMAGE_VENDOR}"
-LABEL org.opencontainers.image.description="Avisblue nvidia-gaming - NVIDIA + Gaming + Dev + CUDA"
+LABEL org.opencontainers.image.description="Avisblue nvidia-gaming - NVIDIA (open) + Gaming + Dev (host); CUDA via containers"

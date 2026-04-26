@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # cleanup-nvidia-gaming.sh - Remove unnecessary packages from Bazzite-NVIDIA for avisblue-nvidia-gaming
 #
-# This is the FIRST step after FROM bazzite-nvidia:stable
+# This is the FIRST step after FROM bazzite-nvidia-open:stable
 # Consolidates all removals into a single layer for smaller image size
 #
 # KEEPS gaming packages (unlike cleanup-main.sh):
@@ -21,7 +21,10 @@
 #   - kde-apps.sh: konsole, kate, okular, gwenview, ark, kcalc, spectacle, partitionmanager, kdeconnectd
 #   - dev-tools.sh: code, podman-docker, podman-compose, qemu-kvm, libvirt, cockpit-machines, cockpit-ostree
 #   - gaming.sh: openrgb, openrgb-udev-rules (Flatpaks via fleet-packages post-boot)
-#   - cuda.sh: nvidia-container-toolkit
+#
+# CUDA tooling is NOT added: bazzite-nvidia-open already ships
+# nvidia-container-toolkit + ublue-nvctk-cdi.service. CUDA SDKs live in workload
+# containers (podman run --device nvidia.com/gpu=all ...).
 
 set -euo pipefail
 
@@ -86,14 +89,6 @@ STREAMING=(
     cage
     wlr-randr
     sunshine
-)
-
-# ROCm - NVIDIA uses CUDA instead
-ROCM=(
-    rocm-hip
-    rocm-opencl
-    rocm-clinfo
-    rocm-smi
 )
 
 # Duplicate tools - we use btop
@@ -231,31 +226,28 @@ echo "[2/11] Handheld packages removed upstream..."
 remove_packages lenient "${HANDHELD_GONE[@]}"
 
 # LENIENT: May vary between Bazzite versions
-echo "[3/11] Streaming/Android packages..."
+echo "[3/10] Streaming/Android packages..."
 remove_packages lenient "${STREAMING[@]}"
 
-echo "[4/11] ROCm packages (NVIDIA uses CUDA)..."
-remove_packages lenient "${ROCM[@]}"
-
-echo "[5/11] Duplicate tools..."
+echo "[4/10] Duplicate tools..."
 remove_packages lenient "${DUPLICATES[@]}"
 
-echo "[6/11] Unused hardware support..."
+echo "[5/10] Unused hardware support..."
 remove_packages lenient "${HARDWARE[@]}"
 
-echo "[7/11] Unused features..."
+echo "[6/10] Unused features..."
 remove_packages lenient "${FEATURES[@]}"
 
-echo "[8/11] GTK apps..."
+echo "[7/10] GTK apps..."
 remove_packages lenient "${GTK_APPS[@]}"
 
-echo "[9/11] Debug tools..."
+echo "[8/10] Debug tools..."
 remove_packages lenient "${DEBUG[@]}"
 
-echo "[10/11] IME packages..."
+echo "[9/10] IME packages..."
 remove_packages lenient "${IME[@]}"
 
-echo "[11/11] Fonts, shells, CLI tools..."
+echo "[10/10] Fonts, shells, CLI tools..."
 remove_packages lenient "${FONTS[@]}" "${SHELLS[@]}" "${CLI_TOOLS[@]}"
 
 echo ""

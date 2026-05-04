@@ -36,7 +36,7 @@ gh release list
 
 ## Architecture
 
-- **Base:** Bazzite on Fedora 43 (`bazzite:stable` / `bazzite-nvidia-open:stable`)
+- **Base:** Bazzite on Fedora 44 (`bazzite:stable` / `bazzite-nvidia-open:stable`) — Avisblue tracks `${FEDORA_VERSION}` from inherited os-release, so it follows upstream Fedora bumps automatically.
 - **Kernel:** bazzite-kernel (HDR, winesync, LAVD/BORE schedulers)
 - **Desktop:** KDE Plasma 6.6 (pure Qt - no GTK apps)
 - **Display:** Wayland-only (SDDM + kwin_wayland, XWayland for legacy apps)

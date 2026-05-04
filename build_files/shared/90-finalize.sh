@@ -35,6 +35,20 @@ for pkg in "${CRITICAL_PACKAGES[@]}"; do
 done
 echo "Package database valid, critical packages present"
 
+# Mask Bazzite's inherited rpm-ostree-countme units (VISION §4#3: no telemetry,
+# even opt-in). Bazzite ships rpm-ostree-countme.timer enabled by default; it
+# triggers `rpm-ostree countme` on a 3-day cycle, which phones home to Fedora's
+# mirror infra to count active deployments. Bluefin keeps this on (community
+# count badge); Avisblue diverges constitutionally. Mask (not just disable) so
+# the units cannot be started manually either.
+#
+# Audit 2026-05-04 (against bazzite:stable + bazzite-nvidia-open:stable):
+#   - rpm-ostree-countme.timer/service: ENABLED — masked here
+#   - kde-inotify-survey: NOT telemetry (KDE inotify-limit notifier)
+#   - dnf countme=: not set in /etc/dnf/dnf.conf (default off)
+echo "Masking rpm-ostree-countme units (constitutional: no telemetry)..."
+systemctl mask rpm-ostree-countme.timer rpm-ostree-countme.service
+
 # Clean package caches
 echo "Cleaning package caches..."
 dnf5 clean all

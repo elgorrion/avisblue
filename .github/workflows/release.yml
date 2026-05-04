@@ -1,10 +1,9 @@
 name: Release Avisblue ISOs
 
 on:
-  workflow_run:
-    workflows: ["Build Avisblue Images"]
-    types: [completed]
-    branches: [main]
+  schedule:
+    # Mondays 08:00 UTC — after upstream Bazzite (Mon 04:40) and our daily image (06:00)
+    - cron: "0 8 * * 1"
   workflow_dispatch:
 
 env:
@@ -21,9 +20,6 @@ concurrency:
 jobs:
   build-iso:
     runs-on: ubuntu-latest
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'success'
     permissions:
       packages: read
     strategy:

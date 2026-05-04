@@ -2,8 +2,8 @@ name: Build Avisblue Images
 
 on:
   schedule:
-    # Build weekly on Sunday at 00:00 UTC
-    - cron: "0 0 * * 0"
+    # Daily 06:00 UTC — picks up Bazzite upstream rebuild (Mon 04:40 UTC) same-day
+    - cron: "0 6 * * *"
   workflow_dispatch:
 
 env:

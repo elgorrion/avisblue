@@ -40,14 +40,21 @@ remove_packages() {
     local packages=("$@")
 
     if [[ "$mode" == "strict" ]]; then
-        # These packages MUST exist in Bazzite - fail loudly if missing
-        if ! dnf5 -y remove "${packages[@]}" 2>&1 | tee /tmp/dnf-remove.log; then
-            if grep -q "No match for argument" /tmp/dnf-remove.log; then
-                echo "ERROR: Expected Bazzite packages not found: ${packages[*]}"
-                echo "Bazzite may have changed upstream. Check and update cleanup script."
-                exit 1
-            fi
+        # Pre-check installation: dnf5 -y remove <missing> exits 0 with only a
+        # "No packages to remove" warning, so a post-hoc grep on the log can't
+        # trip drift detection. Hard-fail here when any expected package is not
+        # installed — that means upstream renamed or dropped it and the strict
+        # array needs updating.
+        local missing=()
+        for pkg in "${packages[@]}"; do
+            rpm -q "$pkg" >/dev/null 2>&1 || missing+=("$pkg")
+        done
+        if (( ${#missing[@]} > 0 )); then
+            echo "ERROR: Expected Bazzite packages not installed: ${missing[*]}"
+            echo "Bazzite may have changed upstream. Update strict array."
+            exit 1
         fi
+        dnf5 -y remove "${packages[@]}"
     else
         # These packages may not exist - skip silently
         dnf5 -y remove "${packages[@]}" 2>/dev/null || true
@@ -58,25 +65,32 @@ remove_packages() {
 # SECTION 1: RPM PACKAGES TO REMOVE
 #################################################
 
-# Gaming - not needed for workstation
+# Gaming - not needed for workstation.
+# Bazzite April 2026 swapped Fedora's gamescope for the Terra COPR build:
+#   gamescope          → terra-gamescope
+#   gamescope-libs     → terra-gamescope-libs
+#   libobs_vkcapture   → obs-studio-plugin-vkcapture-hook-libs
 GAMING=(
     steam
     lutris
-    gamescope
-    gamescope-shaders
-    gamescope-libs
+    terra-gamescope
+    terra-gamescope-libs
     mangohud
     vkBasalt
     umu-launcher
-    libobs_vkcapture
-    libobs_glcapture
+    obs-studio-plugin-vkcapture-hook-libs
 )
 
-# Gaming packages removed from Bazzite desktop images upstream (April 2026)
+# Gaming packages removed from Bazzite desktop images upstream
 GAMING_GONE=(
+    # April 2026
     winetricks
     faugus-launcher
     gamemode
+    # May 2026 — Terra gamescope subsumed shaders into the main package;
+    # libobs_glcapture not present in the Terra OBS plugin set
+    gamescope-shaders
+    libobs_glcapture
 )
 
 # Handheld/HTPC - not needed for desktop

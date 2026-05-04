@@ -44,14 +44,21 @@ remove_packages() {
     local packages=("$@")
 
     if [[ "$mode" == "strict" ]]; then
-        # These packages MUST exist in Bazzite - fail loudly if missing
-        if ! dnf5 -y remove "${packages[@]}" 2>&1 | tee /tmp/dnf-remove.log; then
-            if grep -q "No match for argument" /tmp/dnf-remove.log; then
-                echo "ERROR: Expected Bazzite packages not found: ${packages[*]}"
-                echo "Bazzite may have changed upstream. Check and update cleanup script."
-                exit 1
-            fi
+        # Pre-check installation: dnf5 -y remove <missing> exits 0 with only a
+        # "No packages to remove" warning, so a post-hoc grep on the log can't
+        # trip drift detection. Hard-fail here when any expected package is not
+        # installed — that means upstream renamed or dropped it and the strict
+        # array needs updating.
+        local missing=()
+        for pkg in "${packages[@]}"; do
+            rpm -q "$pkg" >/dev/null 2>&1 || missing+=("$pkg")
+        done
+        if (( ${#missing[@]} > 0 )); then
+            echo "ERROR: Expected Bazzite packages not installed: ${missing[*]}"
+            echo "Bazzite may have changed upstream. Update strict array."
+            exit 1
         fi
+        dnf5 -y remove "${packages[@]}"
     else
         # These packages may not exist - skip silently
         dnf5 -y remove "${packages[@]}" 2>/dev/null || true

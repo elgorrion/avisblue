@@ -55,9 +55,14 @@ echo "--- Patching /usr/lib/os-release ---"
 
 OS_RELEASE=/usr/lib/os-release
 
-# In-place sed updates for fields that already exist
+# In-place sed updates for fields that already exist.
+# ANSI_COLOR=0;34 is VISION §1's deep-blue placeholder; refine to a logo-derived
+# palette once the sparrow-silhouette SVG asset exists.
 sed -i \
+    -e "s|^NAME=.*|NAME=\"Avisblue\"|" \
     -e "s|^PRETTY_NAME=.*|PRETTY_NAME=\"Avisblue ${VARIANT} (${IMAGE_VERSION})\"|" \
+    -e "s|^CPE_NAME=.*|CPE_NAME=\"cpe:/o:elgorrion:avisblue:${FEDORA_VERSION}\"|" \
+    -e "s|^ANSI_COLOR=.*|ANSI_COLOR=\"0;34\"|" \
     -e "s|^HOME_URL=.*|HOME_URL=\"https://github.com/elgorrion/avisblue\"|" \
     -e "s|^DOCUMENTATION_URL=.*|DOCUMENTATION_URL=\"https://github.com/elgorrion/avisblue\"|" \
     -e "s|^SUPPORT_URL=.*|SUPPORT_URL=\"https://github.com/elgorrion/avisblue/issues/\"|" \

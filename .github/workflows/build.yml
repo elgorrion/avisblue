@@ -185,3 +185,86 @@ jobs:
                 exit 1 ;;
             esac
           done
+
+  # Phase G — G3: if a scheduled or workflow_dispatch run goes red anywhere
+  # in build/sign, retag the previous green SHA as :latest and open a tracking
+  # issue. Fleet stays on last-known-good while Q investigates. Deliberately
+  # NOT triggered on pull_request — preview pushes shouldn't revert prod.
+  auto-revert:
+    if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    needs: [build, sign]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      issues: write
+      actions: read
+    steps:
+      - name: Login to GHCR
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121  # v4.1.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Find last green SHA on main
+        id: green
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          # status=success guarantees this is not the current failing run.
+          sha=$(gh api \
+            "repos/${REPO}/actions/workflows/build.yml/runs?status=success&branch=main&per_page=1" \
+            --jq '.workflow_runs[0].head_sha // ""')
+          if [[ -z "$sha" ]]; then
+            echo "FAIL: no prior successful run on main found; cannot revert :latest" >&2
+            exit 1
+          fi
+          echo "Last green SHA: $sha"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Retag previous green as :latest
+        env:
+          REGISTRY: ${{ env.IMAGE_REGISTRY }}
+          GREEN: ${{ steps.green.outputs.sha }}
+        run: |
+          set -euo pipefail
+          # `docker buildx imagetools create` is a server-side retag — no pull.
+          for image in avisblue-main avisblue-nvidia-gaming; do
+            echo "Retagging ${image}: ${GREEN} -> latest"
+            docker buildx imagetools create \
+              --tag "${REGISTRY}/${image}:latest" \
+              "${REGISTRY}/${image}:${GREEN}"
+          done
+
+      - name: Open tracking issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          FAILED_SHA: ${{ github.sha }}
+          GREEN_SHA: ${{ steps.green.outputs.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          # Idempotent label setup so the very first auto-revert doesn't fail
+          # on missing labels. Already-exists is non-fatal.
+          gh --repo "$REPO" label create automated --color ededed \
+            --description "Opened by automation" 2>/dev/null || true
+          gh --repo "$REPO" label create build-failure --color d73a4a \
+            --description "CI build/sign failure" 2>/dev/null || true
+
+          short_failed="${FAILED_SHA:0:7}"
+          short_green="${GREEN_SHA:0:7}"
+          body="Failed run: ${RUN_URL}
+          Failed SHA: \`${FAILED_SHA}\`
+          Restored SHA: \`${GREEN_SHA}\`
+
+          Fleet \`:latest\` retagged to \`${short_green}\` so machines stay on last-known-good while this is investigated.
+
+          Phase G auto-revert (VISION §8a / Theme G)."
+          gh --repo "$REPO" issue create \
+            --title "Auto-revert: build for ${short_failed} failed; :latest restored to ${short_green}" \
+            --label automated,build-failure \
+            --body "$body"

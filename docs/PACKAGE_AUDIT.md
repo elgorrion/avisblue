@@ -4,13 +4,12 @@ Full package flow: Fedora Kinoite → Universal Blue main → Bazzite → Avisbl
 
 Generated: 2026-02-01
 
-> **2026-04-26 staleness notice.** The tables below predate two structural changes; treat the live `Containerfile.*` + `build_files/cleanup/` scripts as truth.
-> - **GPU compute is now container-only** — `build_files/roles/50-rocm.sh` and `build_files/roles/60-cuda.sh` were deleted; sections "Added by 50-rocm.sh" and "Added by 60-cuda.sh" no longer apply. Bazzite April 2026 also moved ROCm out of `bazzite:stable` into `bazzite-dx`, so the "ROCm" rows under Bazzite/Bazzite-NVIDIA layers are also out of date for current `:stable` tags.
-> - **NVIDIA base swapped** — `avisblue-nvidia-gaming` is now built from `ghcr.io/ublue-os/bazzite-nvidia-open:stable` (open kernel modules, matching the deployed fleet), not `bazzite-nvidia:stable`. The "Layer 3: Bazzite-NVIDIA" section still describes the proprietary variant; the open variant ships `nvidia-container-toolkit` + `ublue-nvctk-cdi.service` identically (shared `system_files/nvidia/shared/`).
+> **2026-04-26 staleness notice.** The tables below predate one structural change; treat the live `Containerfile.*` + `build_files/cleanup/` scripts as truth.
+> - **GPU compute is now container-only** — `build_files/roles/50-rocm.sh` and `build_files/roles/60-cuda.sh` were deleted; sections "Added by 50-rocm.sh" and "Added by 60-cuda.sh" no longer apply. Bazzite April 2026 also moved ROCm out of `bazzite:stable` into `bazzite-dx`, so the "ROCm" rows under Layer 4a/4b are also out of date for current `:stable` tags.
 
 ---
 
-## Layer 0: Fedora Kinoite (F43)
+## Layer 0: Fedora Kinoite (F44)
 
 Base atomic KDE Plasma desktop. Includes:
 
@@ -38,7 +37,7 @@ Base atomic KDE Plasma desktop. Includes:
 
 ## Layer 1: Universal Blue Main (ublue-os/kinoite-main)
 
-**Base:** Fedora Kinoite F43
+**Base:** Fedora Kinoite F44
 
 ### Added - All Images
 
@@ -329,7 +328,7 @@ Base atomic KDE Plasma desktop. Includes:
 
 ---
 
-## Layer 3: Bazzite-NVIDIA (ghcr.io/ublue-os/bazzite-nvidia:stable)
+## Layer 3: Bazzite-NVIDIA-Open (ghcr.io/ublue-os/bazzite-nvidia-open:stable)
 
 **Base:** Bazzite (above)
 
@@ -337,14 +336,16 @@ Base atomic KDE Plasma desktop. Includes:
 
 | Package | Purpose |
 |---------|---------|
-| NVIDIA proprietary drivers | GPU drivers |
+| NVIDIA open kernel modules (`kmod-nvidia-open`) | GPU drivers |
 | egl-wayland (x86_64+i686) | EGL Wayland |
+| nvidia-container-toolkit | CDI plumbing for `podman run --device nvidia.com/gpu=all` |
+| ublue-nvctk-cdi.service | Auto-generates `/etc/cdi/nvidia.yaml` at boot |
 
 ### Removed
 
 | Package | Reason |
 |---------|--------|
-| nvidia-gpu-firmware | Proprietary drivers |
+| nvidia-gpu-firmware | Open driver supersedes |
 | rocm-hip, rocm-opencl, rocm-clinfo, rocm-smi | AMD compute |
 
 ---

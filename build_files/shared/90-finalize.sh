@@ -58,11 +58,12 @@ echo "Removing temporary files..."
 rm -rf /tmp/* /var/tmp/*
 
 # Ensure proper permissions on skel files
+# environment.d/ + systemd/user/ are no longer skel-owned — they are managed by
+# system_files/usr/lib/tmpfiles.d/avisblue-user.conf (force-symlinked into ~ on
+# every login) + system_files/etc/systemd/user/default.target.wants/.
 echo "Setting skel permissions..."
 chmod 644 /etc/skel/.bashrc
 chmod 644 /etc/skel/.bashrc.d/*.sh 2>/dev/null || true
-chmod 644 /etc/skel/.config/environment.d/*.conf 2>/dev/null || true
-chmod 644 /etc/skel/.config/systemd/user/*.service 2>/dev/null || true
 
 # Regenerate font cache
 echo "Regenerating font cache..."

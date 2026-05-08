@@ -1,6 +1,15 @@
 #!/usr/bin/env bash
 # fleet-config.sh - Configure fleet settings (locale, SSH, Tailscale)
-# Applied to all avisblue images
+# Applied to all avisblue images.
+#
+# User environment split:
+#   - skel here: shell-only (.bashrc + .bashrc.d/) — applies to NEW accounts.
+#   - Managed env vars + ssh-agent service: shipped via system_files/usr/
+#     (tmpfiles.d/avisblue-user.conf force-symlinks managed env files into
+#     ~/.config/environment.d/ on every login; ssh-agent.service is a
+#     system-installed user unit globally enabled via
+#     /etc/systemd/user/default.target.wants/). This path covers BOTH new
+#     and rebased existing accounts (VISION §8b — Theme C priority-1).
 
 set -euo pipefail
 
@@ -25,46 +34,6 @@ EOF
 # Ensure Tailscale is enabled (already installed in Bazzite)
 echo "Enabling Tailscale..."
 systemctl enable tailscaled.service || true
-
-# SSH agent configuration for KDE (ksshaskpass integration)
-echo "Configuring SSH agent..."
-mkdir -p /etc/skel/.config/environment.d
-cat > /etc/skel/.config/environment.d/ssh-agent.conf << 'EOF'
-SSH_AUTH_SOCK=$XDG_RUNTIME_DIR/ssh-agent.socket
-SSH_ASKPASS=/usr/bin/ksshaskpass
-SSH_ASKPASS_REQUIRE=prefer
-EOF
-
-# Wayland environment configuration
-echo "Configuring Wayland environment..."
-cat > /etc/skel/.config/environment.d/wayland.conf << 'EOF'
-# Prefer Wayland for Qt applications (fallback to XWayland)
-QT_QPA_PLATFORM=wayland;xcb
-
-# Prefer Wayland for GTK applications (fallback to X11)
-GDK_BACKEND=wayland,x11
-
-# Enable Wayland for Firefox
-MOZ_ENABLE_WAYLAND=1
-
-# Enable Wayland for Electron apps
-ELECTRON_OZONE_PLATFORM_HINT=auto
-EOF
-
-# Create ssh-agent systemd user service template
-mkdir -p /etc/skel/.config/systemd/user
-cat > /etc/skel/.config/systemd/user/ssh-agent.service << 'EOF'
-[Unit]
-Description=SSH Agent
-
-[Service]
-Type=simple
-Environment=SSH_AUTH_SOCK=%t/ssh-agent.socket
-ExecStart=/usr/bin/ssh-agent -D -a $SSH_AUTH_SOCK
-
-[Install]
-WantedBy=default.target
-EOF
 
 # Default bashrc additions for fleet
 echo "Configuring default shell environment..."

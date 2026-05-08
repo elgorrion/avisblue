@@ -73,10 +73,33 @@ case "${IMAGE_NAME:?IMAGE_NAME must be set}" in
         ;;
 esac
 
-# 4. Regenerate initramfs so early-boot Plymouth picks up our watermark.
-#    --no-hostonly: bake a generic initramfs (not tied to build-container
-#    hardware). --regenerate-all -f: rebuild for every installed kernel.
-echo "Regenerating initramfs (dracut --regenerate-all -f --no-hostonly)..."
-dracut --regenerate-all -f --no-hostonly
+# 4. Regenerate initramfs at the bootc-canonical path
+#    /usr/lib/modules/<KVER>/initramfs.img — matching ublue-os/bazzite's
+#    build_files/build-initramfs script (verified upstream 2026-05-08).
+#
+#    Earlier (commit 1e2769a) used `dracut --regenerate-all -f --no-hostonly`,
+#    which writes to /boot/initramfs-<KVER>.img (dracut default). bootc/ostree
+#    deploys initramfs from /usr/lib/modules/<KVER>/initramfs.img — so the
+#    /boot copy was discarded at deploy time and the deployed initramfs still
+#    held Bazzite's stock plymouth (bgrt + spinner with original frames) with
+#    no avisblue theme. Symptom on enviada-nb: bootscreen still showed Bazzite
+#    even with plymouthd.conf Theme=avisblue and the theme dir on disk.
+#
+#    Flags mirror Bazzite verbatim: --no-hostonly (generic image), --reproducible
+#    (deterministic bytes for ostree dedup), --zstd, --add ostree (bootc needs
+#    the ostree dracut module), --add fido2 (LUKS unlock support — Bazzite
+#    keeps it; harmless for non-LUKS), -f (overwrite). chmod 0600 because
+#    initramfs may carry secrets in some setups.
+QUALIFIED_KERNEL=$(dnf5 repoquery --installed --queryformat='%{evr}.%{arch}' kernel)
+echo "Regenerating initramfs at /usr/lib/modules/${QUALIFIED_KERNEL}/initramfs.img ..."
+dracut --no-hostonly --kver "$QUALIFIED_KERNEL" --reproducible --zstd \
+       --add ostree --add fido2 \
+       -f "/usr/lib/modules/${QUALIFIED_KERNEL}/initramfs.img"
+chmod 0600 "/usr/lib/modules/${QUALIFIED_KERNEL}/initramfs.img"
+
+# Drop any stale /boot/initramfs-* that the prior --regenerate-all path may
+# have left behind. bootc reads from /usr/lib/modules/, never /boot/, so the
+# /boot copy is dead weight (~242 MB).
+rm -f /boot/initramfs-*.img
 
 echo "=== 85-branding complete ==="

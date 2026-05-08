@@ -44,13 +44,35 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Pull the base image and read VERSION_ID from /usr/lib/os-release.
+      # jasonn3/build-container-installer plumbs `version` into the Lorax
+      # checkout (lorax-${version}.* tag) + Anaconda installer assets; it MUST
+      # match the rootfs's Fedora major or the ISO is broken (kernel/glibc/
+      # libfuse ABI skew). Single source-of-truth: same field 80-avisblue.sh
+      # reads at image build. Hard-fails on non-numeric per RULE 0.
+      - name: Detect Fedora version from base
+        id: fedora
+        env:
+          BASE: ${{ env.IMAGE_REGISTRY }}/${{ matrix.image }}:latest
+        run: |
+          set -euo pipefail
+          podman pull "$BASE"
+          VID=$(podman run --rm "$BASE" \
+            sh -c '. /usr/lib/os-release && echo "$VERSION_ID"')
+          if [[ ! "$VID" =~ ^[0-9]+$ ]]; then
+            echo "ERROR: VERSION_ID not numeric: '$VID'" >&2
+            exit 1
+          fi
+          echo "version=$VID" >> "$GITHUB_OUTPUT"
+          echo "Detected Fedora $VID from $BASE"
+
       - name: Build ISO
         uses: jasonn3/build-container-installer@c9ef3de33236e66781ec37bd0485e8009eaefe24  # v1.4.0
         with:
           image_name: ${{ matrix.image }}
           image_repo: ${{ env.IMAGE_REGISTRY }}
           image_tag: latest
-          version: 43
+          version: ${{ steps.fedora.outputs.version }}
           variant: Kinoite
           iso_name: ${{ matrix.image }}.iso
 

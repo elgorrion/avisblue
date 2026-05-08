@@ -133,8 +133,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Pinned to cosign-installer v3.10.1 (= cosign v2.6.1) on 2026-05-08
+      # because cosign v3 default `--registry-referrers-mode=oci-1-1` writes
+      # the new `application/vnd.dev.sigstore.bundle.v0.3+json` referrer
+      # artifact at tag `sha256-DIGEST` (no `.sig` suffix), which the
+      # Bazzite-shipped containers-image (Fedora 44, containers-common 0.67,
+      # bootc 1.15.1) cannot verify — `bootc upgrade` fails fleet-wide with
+      # "A signature was required, but no signature exists". The v3 opt-out
+      # flags `--registry-referrers-mode=legacy` and `--use-signing-config=false`
+      # were tried (commit a0d8644) and did not actually change cosign's
+      # output. Bluefin / bazzite-dx use the same v3.10.1 pin in production.
+      # Re-evaluate when Fedora 45+ ships a containers-image that handles
+      # the v0.3 sigstore bundle format.
       - name: Install cosign
-        uses: sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003  # v4.1.1
+        uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5  # v3.10.1
 
       - name: Sign images
         env:
@@ -142,25 +154,14 @@ jobs:
           REGISTRY: ${{ env.IMAGE_REGISTRY }}
           SHA: ${{ github.sha }}
         run: |
-          # --registry-referrers-mode=legacy: write the cosign legacy
-          #   `sha256-DIGEST.sig` tag schema. cosign v3 default is OCI 1.1
-          #   referrers, but Bazzite-shipped containers-image (Fedora 44,
-          #   containers-common 0.67) only understands the legacy `.sig` tag —
-          #   bootc upgrade fails with "A signature was required, but no
-          #   signature exists" against an OCI 1.1 attachment. Re-evaluate
-          #   when Fedora 45+ ships a containers-image that handles
-          #   `application/vnd.dev.sigstore.bundle.v0.3+json` (then drop this
-          #   flag and let the OCI 1.1 default apply).
-          # --use-signing-config=false: skip TUF signing-config fetch
-          #   (release.yml/sign-blob already uses this idiom).
+          # cosign v2 default uploads to Rekor; --tlog-upload=false keeps the
+          # signature offline (Avisblue ships no Rekor reference).
           for image in avisblue-main avisblue-nvidia-gaming; do
             cosign sign --key env://COSIGN_PRIVATE_KEY --yes \
-              --use-signing-config=false \
-              --registry-referrers-mode=legacy \
+              --tlog-upload=false \
               "${REGISTRY}/${image}:latest"
             cosign sign --key env://COSIGN_PRIVATE_KEY --yes \
-              --use-signing-config=false \
-              --registry-referrers-mode=legacy \
+              --tlog-upload=false \
               "${REGISTRY}/${image}:${SHA}"
           done
 

@@ -72,6 +72,33 @@ cp "$SRC_TINTED" "$OUT/usr/share/icons/hicolor/scalable/places/distributor-logo-
 mkdir -p "$OUT/usr/share/plymouth/themes/spinner"
 rsvg-convert -w 200 "$SRC_LIGHT" -o "$OUT/usr/share/plymouth/themes/spinner/watermark.png"
 
+# Stash mirror of fedora-logos-clobbered paths.
+#
+# `dnf5 swap fedora-logos generic-logos` (run by 85-branding.sh) removes any
+# file at a path RPM tracks for fedora-logos, regardless of whether COPY
+# replaced it earlier. Our COPYed files at those paths get silently deleted.
+#
+# Stash a mirror under /usr/share/avisblue/branding-stash/ (no RPM owns this
+# path); 85-branding.sh restores from stash AFTER the swap. The stash also
+# acts as ground truth if anything else ever touches /usr/share/pixmaps/ or
+# /usr/share/plymouth/.
+STASH="$OUT/usr/share/avisblue/branding-stash"
+mkdir -p "$STASH/usr/share/plymouth/themes/spinner" \
+         "$STASH/usr/share/pixmaps" \
+         "$STASH/usr/share/icons/hicolor/scalable/apps"
+cp "$OUT/usr/share/plymouth/themes/spinner/watermark.png" \
+   "$STASH/usr/share/plymouth/themes/spinner/watermark.png"
+cp "$OUT/usr/share/pixmaps/fedora-logo.png" \
+   "$STASH/usr/share/pixmaps/fedora-logo.png"
+cp "$OUT/usr/share/pixmaps/fedora-logo-small.png" \
+   "$STASH/usr/share/pixmaps/fedora-logo-small.png"
+cp "$OUT/usr/share/pixmaps/fedora_logo_med.png" \
+   "$STASH/usr/share/pixmaps/fedora_logo_med.png"
+cp "$OUT/usr/share/pixmaps/system-logo-white.png" \
+   "$STASH/usr/share/pixmaps/system-logo-white.png"
+cp "$OUT/usr/share/icons/hicolor/scalable/apps/start-here.svg" \
+   "$STASH/usr/share/icons/hicolor/scalable/apps/start-here.svg"
+
 # §7 KDE Look-and-Feel splash logo (svgz = gzipped svg)
 LF_DIR="$OUT/usr/share/plasma/look-and-feel/dev.elgorrion.avisblue.desktop"
 mkdir -p "$LF_DIR/contents/splash/images"

@@ -123,6 +123,9 @@ jobs:
       packages: write
       id-token: write
     steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
       - name: Login to GHCR
         uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121  # v4.1.0
         with:
@@ -142,4 +145,43 @@ jobs:
           for image in avisblue-main avisblue-nvidia-gaming; do
             cosign sign --key env://COSIGN_PRIVATE_KEY --yes "${REGISTRY}/${image}:latest"
             cosign sign --key env://COSIGN_PRIVATE_KEY --yes "${REGISTRY}/${image}:${SHA}"
+          done
+
+      # Phase G — G2: verify each tag's sig is reachable with our public key
+      # AND that :latest resolved to a single-platform manifest, not an
+      # OCI/Docker index. The latter would mean cosign signed the index digest
+      # while bootc upgrade resolves index -> platform and looks up sig at
+      # the platform digest -> miss -> fleet pull fails with "A signature was
+      # required, but no signature exists" (commit c5993b0, 2026-05-08).
+      - name: Verify signature chain
+        env:
+          REGISTRY: ${{ env.IMAGE_REGISTRY }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          for image in avisblue-main avisblue-nvidia-gaming; do
+            LATEST="${REGISTRY}/${image}:latest"
+            SHA_REF="${REGISTRY}/${image}:${SHA}"
+
+            # cosign v3 default expects a Rekor tlog entry; we sign offline
+            # without uploading -> --insecure-ignore-tlog=true is required.
+            cosign verify --key cosign.pub --insecure-ignore-tlog=true "$LATEST" >/dev/null
+            cosign verify --key cosign.pub --insecure-ignore-tlog=true "$SHA_REF" >/dev/null
+            echo "OK: ${image} signatures verify against cosign.pub"
+
+            mt=$(skopeo inspect --raw "docker://$LATEST" | jq -r '.mediaType')
+            case "$mt" in
+              application/vnd.oci.image.manifest.v1+json|application/vnd.docker.distribution.manifest.v2+json)
+                echo "OK: ${image}:latest is single-platform manifest ($mt)" ;;
+              application/vnd.oci.image.index.v1+json|application/vnd.docker.distribution.manifest.list.v2+json)
+                echo "FAIL: ${image}:latest is a multi-arch index ($mt)." >&2
+                echo "  bootc resolves index -> platform manifest and looks up" >&2
+                echo "  signature at the platform digest. Signature is attached" >&2
+                echo "  to the index digest. Fleet pull will fail." >&2
+                echo "  Fix: provenance:false + sbom:false in build-push-action." >&2
+                exit 1 ;;
+              *)
+                echo "FAIL: ${image}:latest mediaType not recognised: $mt" >&2
+                exit 1 ;;
+            esac
           done

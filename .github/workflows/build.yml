@@ -142,9 +142,26 @@ jobs:
           REGISTRY: ${{ env.IMAGE_REGISTRY }}
           SHA: ${{ github.sha }}
         run: |
+          # --registry-referrers-mode=legacy: write the cosign legacy
+          #   `sha256-DIGEST.sig` tag schema. cosign v3 default is OCI 1.1
+          #   referrers, but Bazzite-shipped containers-image (Fedora 44,
+          #   containers-common 0.67) only understands the legacy `.sig` tag —
+          #   bootc upgrade fails with "A signature was required, but no
+          #   signature exists" against an OCI 1.1 attachment. Re-evaluate
+          #   when Fedora 45+ ships a containers-image that handles
+          #   `application/vnd.dev.sigstore.bundle.v0.3+json` (then drop this
+          #   flag and let the OCI 1.1 default apply).
+          # --use-signing-config=false: skip TUF signing-config fetch
+          #   (release.yml/sign-blob already uses this idiom).
           for image in avisblue-main avisblue-nvidia-gaming; do
-            cosign sign --key env://COSIGN_PRIVATE_KEY --yes "${REGISTRY}/${image}:latest"
-            cosign sign --key env://COSIGN_PRIVATE_KEY --yes "${REGISTRY}/${image}:${SHA}"
+            cosign sign --key env://COSIGN_PRIVATE_KEY --yes \
+              --use-signing-config=false \
+              --registry-referrers-mode=legacy \
+              "${REGISTRY}/${image}:latest"
+            cosign sign --key env://COSIGN_PRIVATE_KEY --yes \
+              --use-signing-config=false \
+              --registry-referrers-mode=legacy \
+              "${REGISTRY}/${image}:${SHA}"
           done
 
       # Phase G — G2: verify each tag's sig is reachable with our public key

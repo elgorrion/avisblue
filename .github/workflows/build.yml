@@ -231,12 +231,18 @@ jobs:
           GREEN: ${{ steps.green.outputs.sha }}
         run: |
           set -euo pipefail
-          # `docker buildx imagetools create` is a server-side retag — no pull.
+          # skopeo copy preserves the source manifest format (single-platform
+          # stays single-platform). `docker buildx imagetools create` does NOT
+          # — it wraps the source in a manifest LIST, changing the digest at
+          # :latest. The cosign signature is attached to the original
+          # single-platform digest, so wrapping breaks bootc's sig lookup
+          # (the c5993b0-class regression). skopeo copies the manifest verbatim
+          # to the new tag, so :latest's digest matches the signed digest.
           for image in avisblue-main avisblue-nvidia-gaming; do
             echo "Retagging ${image}: ${GREEN} -> latest"
-            docker buildx imagetools create \
-              --tag "${REGISTRY}/${image}:latest" \
-              "${REGISTRY}/${image}:${GREEN}"
+            skopeo copy --quiet \
+              "docker://${REGISTRY}/${image}:${GREEN}" \
+              "docker://${REGISTRY}/${image}:latest"
           done
 
       - name: Open tracking issue

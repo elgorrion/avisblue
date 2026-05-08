@@ -255,16 +255,16 @@ echo ""
 echo "--- Removing RPM packages ---"
 
 # STRICT: Core Bazzite packages - if missing, upstream changed significantly
-echo "[1/14] Gaming packages (strict)..."
+echo "[1/13] Gaming packages (strict)..."
 remove_packages strict "${GAMING[@]}"
 
-echo "[2/14] Gaming packages removed upstream..."
+echo "[2/13] Gaming packages removed upstream..."
 remove_packages lenient "${GAMING_GONE[@]}"
 
-echo "[3/14] Handheld/HTPC packages (strict)..."
+echo "[3/13] Handheld/HTPC packages (strict)..."
 remove_packages strict "${HANDHELD[@]}"
 
-echo "[4/14] Handheld packages removed upstream..."
+echo "[4/13] Handheld packages removed upstream..."
 remove_packages lenient "${HANDHELD_GONE[@]}"
 
 # LENIENT: May vary between Bazzite versions

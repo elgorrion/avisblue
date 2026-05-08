@@ -33,7 +33,7 @@ case "$IMAGE_NAME" in
     avisblue-nvidia-gaming)
         FLAVOR="nvidia-gaming"
         VARIANT="NVIDIA Gaming"
-        BASE_IMAGE_NAME="bazzite-nvidia"
+        BASE_IMAGE_NAME="bazzite-nvidia-open"
         ;;
     *)
         echo "ERROR: Unknown IMAGE_NAME: $IMAGE_NAME" >&2

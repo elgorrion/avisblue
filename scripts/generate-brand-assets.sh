@@ -72,6 +72,20 @@ cp "$SRC_TINTED" "$OUT/usr/share/icons/hicolor/scalable/places/distributor-logo-
 mkdir -p "$OUT/usr/share/plymouth/themes/spinner"
 rsvg-convert -w 200 "$SRC_LIGHT" -o "$OUT/usr/share/plymouth/themes/spinner/watermark.png"
 
+# §4 Plymouth spinner frames — recolour stock 36 frames to brand primary blue.
+# Stock frames are greyscale (Fedora plymouth-theme-spinner, GPL-2.0-or-later).
+# Level-colors remaps: pure-black input -> deep BG #11243B, pure-white input ->
+# primary #5BA0D9. Greyscale gradient becomes a blue gradient — same rotation
+# pattern, brand-coloured. Owned by plymouth-theme-spinner (not fedora-logos),
+# so no stash needed; dracut regen in 85-branding.sh bakes them into initramfs.
+SPINNER_STOCK="${REPO_ROOT}/brand/source/spinner-stock"
+for f in "$SPINNER_STOCK"/animation-*.png; do
+    [[ -f "$f" ]] || { echo "ERROR: missing spinner stock $f" >&2; exit 1; }
+    base=$(basename "$f")
+    magick "$f" +level-colors '#11243B,#5BA0D9' \
+        "$OUT/usr/share/plymouth/themes/spinner/$base"
+done
+
 # Stash mirror of fedora-logos-clobbered paths.
 #
 # `dnf5 swap fedora-logos generic-logos` (run by 85-branding.sh) removes any

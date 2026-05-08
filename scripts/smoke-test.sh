@@ -43,13 +43,15 @@ run_inside() {
         /etc/xdg/kdeglobals
         /etc/motd
         /etc/issue
-        # Branding stash (must survive dnf swap fedora-logos -> generic-logos)
+        # Branding stash (must survive dnf swap fedora-logos -> generic-logos
+        # AND main-variant cleanup that removes steamdeck-kde-presets-desktop)
         /usr/share/avisblue/branding-stash/usr/share/plymouth/themes/spinner/watermark.png
         /usr/share/avisblue/branding-stash/usr/share/pixmaps/fedora-logo.png
         /usr/share/avisblue/branding-stash/usr/share/pixmaps/fedora-logo-small.png
         /usr/share/avisblue/branding-stash/usr/share/pixmaps/fedora_logo_med.png
         /usr/share/avisblue/branding-stash/usr/share/pixmaps/system-logo-white.png
         /usr/share/avisblue/branding-stash/usr/share/icons/hicolor/scalable/apps/start-here.svg
+        /usr/share/avisblue/branding-stash/etc/xdg/kdeglobals
         # Plymouth (recoloured)
         /usr/share/plymouth/themes/spinner/watermark.png
         /usr/share/plymouth/themes/spinner/animation-0001.png
@@ -113,6 +115,7 @@ run_inside() {
         /usr/share/pixmaps/fedora_logo_med.png
         /usr/share/pixmaps/system-logo-white.png
         /usr/share/icons/hicolor/scalable/apps/start-here.svg
+        /etc/xdg/kdeglobals
     )
     local p
     for p in "${pairs[@]}"; do

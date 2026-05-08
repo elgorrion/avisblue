@@ -32,16 +32,20 @@ echo "Swapping fedora-logos for generic-logos..."
 dnf5 -y swap fedora-logos generic-logos
 rpm --erase --nodeps --nodb generic-logos
 
-# 2. Restore branded files at the paths the swap clobbered
+# 2. Restore branded files at the paths the swap (or earlier cleanup-main) clobbered
 echo "Restoring branded files from /usr/share/avisblue/branding-stash/ ..."
 STASH=/usr/share/avisblue/branding-stash
+# /etc/xdg/kdeglobals is owned by steamdeck-kde-presets-desktop on the
+# bazzite:stable base; cleanup-main removes that package and the file with it.
+# nvidia-gaming keeps the package, so the restore is a no-op on that variant.
 for rel in \
     usr/share/plymouth/themes/spinner/watermark.png \
     usr/share/pixmaps/fedora-logo.png \
     usr/share/pixmaps/fedora-logo-small.png \
     usr/share/pixmaps/fedora_logo_med.png \
     usr/share/pixmaps/system-logo-white.png \
-    usr/share/icons/hicolor/scalable/apps/start-here.svg
+    usr/share/icons/hicolor/scalable/apps/start-here.svg \
+    etc/xdg/kdeglobals
 do
     src="$STASH/$rel"
     dst="/$rel"

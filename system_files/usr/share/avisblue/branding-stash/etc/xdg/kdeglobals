@@ -1,0 +1,6 @@
+[KDE]
+LookAndFeelPackage=dev.elgorrion.avisblue.desktop
+SingleClick=false
+
+[General]
+ColorScheme=BreezeDark

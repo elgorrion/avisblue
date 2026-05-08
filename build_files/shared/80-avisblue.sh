@@ -170,7 +170,7 @@ jq '.transports.docker["ghcr.io/elgorrion"] = [
     {
         "type": "sigstoreSigned",
         "keyPath": "/etc/pki/containers/avisblue.pub",
-        "signedIdentity": {"type": "matchRepoDigestOrExact"}
+        "signedIdentity": {"type": "matchRepository"}
     }
 ]' "$SRC_POLICY" > "${DST_POLICY}.new"
 

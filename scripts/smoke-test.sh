@@ -45,17 +45,20 @@ run_inside() {
         /etc/issue
         # Branding stash (must survive dnf swap fedora-logos -> generic-logos
         # AND main-variant cleanup that removes steamdeck-kde-presets-desktop)
-        /usr/share/avisblue/branding-stash/usr/share/plymouth/themes/spinner/watermark.png
         /usr/share/avisblue/branding-stash/usr/share/pixmaps/fedora-logo.png
         /usr/share/avisblue/branding-stash/usr/share/pixmaps/fedora-logo-small.png
         /usr/share/avisblue/branding-stash/usr/share/pixmaps/fedora_logo_med.png
         /usr/share/avisblue/branding-stash/usr/share/pixmaps/system-logo-white.png
         /usr/share/avisblue/branding-stash/usr/share/icons/hicolor/scalable/apps/start-here.svg
         /usr/share/avisblue/branding-stash/etc/xdg/kdeglobals
-        # Plymouth (recoloured)
-        /usr/share/plymouth/themes/spinner/watermark.png
-        /usr/share/plymouth/themes/spinner/animation-0001.png
-        /usr/share/plymouth/themes/spinner/animation-0036.png
+        # Plymouth (avisblue full theme — replaces the prior spinner overlay
+        # so we escape the firmware-BGRT background that the stock bgrt theme
+        # used)
+        /etc/plymouth/plymouthd.conf
+        /usr/share/plymouth/themes/avisblue/avisblue.plymouth
+        /usr/share/plymouth/themes/avisblue/watermark.png
+        /usr/share/plymouth/themes/avisblue/animation-0001.png
+        /usr/share/plymouth/themes/avisblue/animation-0036.png
         # Pixmaps + hicolor icons
         /usr/share/pixmaps/avisblue-logo.svg
         /usr/share/pixmaps/system-logo-white.png
@@ -69,8 +72,14 @@ run_inside() {
         /etc/sddm.conf.d/10-wayland.conf
         # KDE Look-and-Feel
         /usr/share/plasma/look-and-feel/dev.elgorrion.avisblue.desktop/metadata.json
+        /usr/share/plasma/look-and-feel/dev.elgorrion.avisblue.desktop/contents/defaults
         /usr/share/plasma/look-and-feel/dev.elgorrion.avisblue.desktop/contents/splash/Splash.qml
         /usr/share/plasma/look-and-feel/dev.elgorrion.avisblue.desktop/contents/splash/images/avisblue_logo.svgz
+        # Plasmoid setup scripts — needed so kickoff renders Avisblue logo
+        # (icon name "start-here") instead of Breeze "start-here-kde" Plasma "K"
+        /usr/share/plasma/look-and-feel/dev.elgorrion.avisblue.desktop/contents/plasmoidsetupscripts/org.kde.plasma.kickoff.js
+        /usr/share/plasma/look-and-feel/dev.elgorrion.avisblue.desktop/contents/plasmoidsetupscripts/org.kde.plasma.kicker.js
+        /usr/share/plasma/look-and-feel/dev.elgorrion.avisblue.desktop/contents/plasmoidsetupscripts/org.kde.plasma.kickerdash.js
         # Wallpaper
         /usr/share/wallpapers/avisblue/contents/images/3840x2160.jxl
         /usr/share/wallpapers/avisblue/metadata.json
@@ -109,7 +118,6 @@ run_inside() {
     # fleet boots with generic Fedora art. cmp -s catches that bit-for-bit.
     local stash=/usr/share/avisblue/branding-stash
     local pairs=(
-        /usr/share/plymouth/themes/spinner/watermark.png
         /usr/share/pixmaps/fedora-logo.png
         /usr/share/pixmaps/fedora-logo-small.png
         /usr/share/pixmaps/fedora_logo_med.png
@@ -128,13 +136,31 @@ run_inside() {
 
     # ----- Plymouth frame count -------------------------------------------
     local frames
-    frames=$(find /usr/share/plymouth/themes/spinner/ -maxdepth 1 \
+    frames=$(find /usr/share/plymouth/themes/avisblue/ -maxdepth 1 \
         -name 'animation-*.png' -type f | wc -l)
     if [[ "$frames" != "36" ]]; then
-        echo "FAIL: expected 36 Plymouth spinner frames, found $frames" >&2
+        echo "FAIL: expected 36 Plymouth avisblue frames, found $frames" >&2
         exit 1
     fi
-    echo "OK: 36 Plymouth spinner frames"
+    echo "OK: 36 Plymouth avisblue frames"
+
+    # ----- Plymouth active theme -----------------------------------------
+    # Bootscreen Q-bug: stock bgrt theme uses ACPI BGRT firmware logo as
+    # background, so even with our watermark overlay the dominant visual was
+    # the laptop firmware logo (Q correctly read it as "still Bazzite-ish").
+    # We now ship plymouthd.conf with Theme=avisblue + a full theme dir.
+    # Assert both: theme name in conf AND theme manifest on disk.
+    local active_theme
+    active_theme=$(awk -F= '/^Theme=/ { print $2; exit }' /etc/plymouth/plymouthd.conf 2>/dev/null)
+    if [[ "$active_theme" != "avisblue" ]]; then
+        echo "FAIL: /etc/plymouth/plymouthd.conf Theme is '$active_theme', expected 'avisblue'" >&2
+        exit 1
+    fi
+    if ! grep -q '^Name=Avisblue' /usr/share/plymouth/themes/avisblue/avisblue.plymouth; then
+        echo "FAIL: avisblue.plymouth manifest missing or wrong Name=" >&2
+        exit 1
+    fi
+    echo "OK: Plymouth active theme = avisblue"
 
     # ----- Content asserts ------------------------------------------------
     grep -q '^NAME="Avisblue"' /usr/lib/os-release \

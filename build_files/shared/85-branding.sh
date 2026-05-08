@@ -10,18 +10,21 @@
 #      the generic-logos files from disk while keeping the DB happy.
 #
 #   2. Restore-from-stash. The dnf swap REMOVES any file at a path
-#      fedora-logos tracks (Plymouth watermark + fedora-logo-{,-small,_med}.png
-#      + system-logo-white.png + start-here.svg), even if COPY replaced them
-#      earlier. We re-deploy those exact paths from /usr/share/avisblue/
-#      branding-stash/ which the swap can't touch.
+#      fedora-logos tracks (fedora-logo-{,-small,_med}.png + system-logo-white.png
+#      + start-here.svg), even if COPY replaced them earlier. We re-deploy
+#      those exact paths from /usr/share/avisblue/branding-stash/ which the
+#      swap can't touch.
+#      (Plymouth assets live at /usr/share/plymouth/themes/avisblue/, an
+#      uncontested path — no RPM owns it, no stash needed.)
 #
 #   3. NVIDIA variant differentiation: kcm-about-distrorc ships with
 #      Variant=Main; the NVIDIA image needs Variant=NVIDIA Gaming.
 #
-#   4. dracut --regenerate-all -f --no-hostonly. Bakes the new Plymouth
-#      watermark into the image's initramfs so early-boot Plymouth doesn't
-#      show stale Bazzite art. --no-hostonly because we ship a generic image,
-#      not a build-host-specific one.
+#   4. dracut --regenerate-all -f --no-hostonly. Bakes the avisblue Plymouth
+#      theme + plymouthd.conf (Theme=avisblue) into the image's initramfs so
+#      early-boot Plymouth uses our theme — not the firmware-BGRT default
+#      that Q correctly identified as still looking like Bazzite. --no-hostonly
+#      because we ship a generic image, not a build-host-specific one.
 
 set -euo pipefail
 
@@ -39,7 +42,6 @@ STASH=/usr/share/avisblue/branding-stash
 # bazzite:stable base; cleanup-main removes that package and the file with it.
 # nvidia-gaming keeps the package, so the restore is a no-op on that variant.
 for rel in \
-    usr/share/plymouth/themes/spinner/watermark.png \
     usr/share/pixmaps/fedora-logo.png \
     usr/share/pixmaps/fedora-logo-small.png \
     usr/share/pixmaps/fedora_logo_med.png \

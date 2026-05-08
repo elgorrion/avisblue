@@ -68,22 +68,27 @@ cp "$SRC_TINTED" "$OUT/usr/share/icons/hicolor/scalable/apps/start-here.svg"
 cp "$SRC_TINTED" "$OUT/usr/share/icons/hicolor/scalable/places/distributor-logo.svg"
 cp "$SRC_TINTED" "$OUT/usr/share/icons/hicolor/scalable/places/distributor-logo-symbolic.svg"
 
-# §4 Plymouth watermark (200px wide; light variant on dark spinner BG)
-mkdir -p "$OUT/usr/share/plymouth/themes/spinner"
-rsvg-convert -w 200 "$SRC_LIGHT" -o "$OUT/usr/share/plymouth/themes/spinner/watermark.png"
+# §4 Plymouth — full custom theme at /usr/share/plymouth/themes/avisblue/.
+# avisblue.plymouth (shipped via system_files, not generated) drives a deep-blue
+# gradient background with a centred sparrow watermark and recoloured spinner
+# at 75% vertical. No firmware-background fallback — Bazzite/Fedora's stock
+# `bgrt` theme uses the laptop firmware logo, which Q correctly flagged as
+# "looks like Bazzite". Our theme is fully self-contained.
+#
+# Watermark @ 600px wide (≈15% of 4K canvas) so it actually reads on screen,
+# unlike the 200px stock-spinner overlay we shipped before.
+PT_DIR="$OUT/usr/share/plymouth/themes/avisblue"
+mkdir -p "$PT_DIR"
+rsvg-convert -w 600 "$SRC_LIGHT" -o "$PT_DIR/watermark.png"
 
-# §4 Plymouth spinner frames — recolour stock 36 frames to brand primary blue.
-# Stock frames are greyscale (Fedora plymouth-theme-spinner, GPL-2.0-or-later).
-# Level-colors remaps: pure-black input -> deep BG #11243B, pure-white input ->
-# primary #5BA0D9. Greyscale gradient becomes a blue gradient — same rotation
-# pattern, brand-coloured. Owned by plymouth-theme-spinner (not fedora-logos),
-# so no stash needed; dracut regen in 85-branding.sh bakes them into initramfs.
+# Spinner frames — recolour stock greyscale frames (Fedora plymouth-theme-spinner,
+# GPL-2.0-or-later) to brand-blue gradient via level-colors remap:
+#   pure-black input -> deep BG #11243B, pure-white input -> primary #5BA0D9.
 SPINNER_STOCK="${REPO_ROOT}/brand/source/spinner-stock"
 for f in "$SPINNER_STOCK"/animation-*.png; do
     [[ -f "$f" ]] || { echo "ERROR: missing spinner stock $f" >&2; exit 1; }
     base=$(basename "$f")
-    magick "$f" +level-colors '#11243B,#5BA0D9' \
-        "$OUT/usr/share/plymouth/themes/spinner/$base"
+    magick "$f" +level-colors '#11243B,#5BA0D9' "$PT_DIR/$base"
 done
 
 # Stash mirror of fedora-logos-clobbered paths.
@@ -93,15 +98,14 @@ done
 # replaced it earlier. Our COPYed files at those paths get silently deleted.
 #
 # Stash a mirror under /usr/share/avisblue/branding-stash/ (no RPM owns this
-# path); 85-branding.sh restores from stash AFTER the swap. The stash also
-# acts as ground truth if anything else ever touches /usr/share/pixmaps/ or
-# /usr/share/plymouth/.
+# path); 85-branding.sh restores from stash AFTER the swap.
+#
+# NOTE: /usr/share/plymouth/themes/avisblue/ is NOT clobbered (no RPM owns the
+# avisblue theme dir), so it's not stashed. Only fedora-logos-tracked paths
+# need stashing.
 STASH="$OUT/usr/share/avisblue/branding-stash"
-mkdir -p "$STASH/usr/share/plymouth/themes/spinner" \
-         "$STASH/usr/share/pixmaps" \
+mkdir -p "$STASH/usr/share/pixmaps" \
          "$STASH/usr/share/icons/hicolor/scalable/apps"
-cp "$OUT/usr/share/plymouth/themes/spinner/watermark.png" \
-   "$STASH/usr/share/plymouth/themes/spinner/watermark.png"
 cp "$OUT/usr/share/pixmaps/fedora-logo.png" \
    "$STASH/usr/share/pixmaps/fedora-logo.png"
 cp "$OUT/usr/share/pixmaps/fedora-logo-small.png" \
@@ -133,16 +137,23 @@ rsvg-convert -w 32  -h 32  "$SRC_TINTED" -o "$TMPDIR/32.png"
 rsvg-convert -w 48  -h 48  "$SRC_TINTED" -o "$TMPDIR/48.png"
 magick "$TMPDIR/16.png" "$TMPDIR/32.png" "$TMPDIR/48.png" "$COCK_DIR/favicon.ico"
 
-# §5.5 Wallpaper — single hero, deep radial gradient + mark watermark @ 18%
+# §5.5 Wallpaper — Etsy sparrow mark centred over deep-blue radial gradient.
+# Uses SRC_LIGHT (#ECF1F8 fill) so the sparrow reads bright against the deep
+# navy background. Gravity centre, 100px above geometric middle so it sits
+# above the Plasma panel without feeling top-heavy. 600px wide ≈ 15% of the
+# 3840px canvas — present but not overwhelming.
+#
+# Replaces the previous 320px-mark @ 18%-alpha southeast composition (Q
+# correctly called it AI-slop / barely visible).
 WALL_DIR="$OUT/usr/share/wallpapers/avisblue/contents/images"
 mkdir -p "$WALL_DIR"
-rsvg-convert -w 320 "$SRC_LIGHT" -o "$TMPDIR/mark-320.png"
+rsvg-convert -w 600 "$SRC_LIGHT" -o "$TMPDIR/mark-600.png"
 magick -size 3840x2160 \
-    radial-gradient:'#2A4A6E'-'#11243B' \
-    \( "$TMPDIR/mark-320.png" -alpha set -channel A -evaluate multiply 0.18 +channel \) \
-    -gravity southeast -geometry +220+220 -composite \
+    radial-gradient:'#1F3A5C'-'#0A1828' \
+    \( "$TMPDIR/mark-600.png" -alpha set -channel A -evaluate multiply 0.95 +channel \) \
+    -gravity center -geometry +0-120 -composite \
     "$TMPDIR/wallpaper.png"
-cjxl --quality 90 --effort 7 "$TMPDIR/wallpaper.png" "$WALL_DIR/3840x2160.jxl"
+cjxl --quality 92 --effort 7 "$TMPDIR/wallpaper.png" "$WALL_DIR/3840x2160.jxl"
 
 # §3 Fastfetch ASCII (prepend $1 colour marker per line so fastfetch tints it)
 ASCII_DIR="$OUT/usr/share/fastfetch/logos"

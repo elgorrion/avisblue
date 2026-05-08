@@ -26,7 +26,4 @@ library=org.kde.breeze
 Theme=dev.elgorrion.avisblue
 
 [Wallpaper]
-defaultWallpaperTheme=avisblue
-defaultFileSuffix=.jxl
-defaultWidth=3840
-defaultHeight=2160
+Image=avisblue

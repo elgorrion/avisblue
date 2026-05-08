@@ -79,6 +79,13 @@ jobs:
           context: .
           file: ${{ matrix.containerfile }}
           push: true
+          # buildx defaults attach provenance + sbom, converting push into a
+          # multi-arch index. cosign then signs the index digest, but bootc
+          # looks up sig by platform-manifest digest -> mismatch -> pull fails
+          # "A signature was required, but no signature exists". Disabled per
+          # VISION §8: no supply-chain scanners for a single-owner derivative.
+          provenance: false
+          sbom: false
           tags: |
             ${{ env.IMAGE_REGISTRY }}/${{ matrix.image }}:latest
             ${{ env.IMAGE_REGISTRY }}/${{ matrix.image }}:${{ github.sha }}

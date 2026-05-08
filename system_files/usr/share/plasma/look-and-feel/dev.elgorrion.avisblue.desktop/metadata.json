@@ -1,0 +1,15 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "KPlugin": {
+        "Authors": [{"Email": "", "Name": "ElGorrion"}],
+        "Category": "",
+        "Description": "Avisblue desktop theme based on BreezeDark",
+        "Id": "dev.elgorrion.avisblue.desktop",
+        "License": "GPL-3.0-or-later",
+        "Name": "Avisblue",
+        "ServiceTypes": ["Plasma/LookAndFeel"],
+        "Version": "1.0",
+        "Website": "https://github.com/elgorrion/avisblue"
+    },
+    "X-Plasma-MainScript": "defaults"
+}

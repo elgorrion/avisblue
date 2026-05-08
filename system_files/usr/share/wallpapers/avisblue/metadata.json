@@ -1,0 +1,13 @@
+{
+    "KPlugin": {
+        "Authors": [{"Name": "ElGorrion", "Email": ""}],
+        "Id": "avisblue",
+        "Name": "Avisblue",
+        "License": "Mark licensed via Awancreativestudio (Etsy); composition by ElGorrion",
+        "Version": "1.0",
+        "Website": "https://github.com/elgorrion/avisblue"
+    },
+    "X-KDE-PluginInfo-Author": "ElGorrion",
+    "X-KDE-PluginInfo-Name": "avisblue",
+    "X-KDE-PluginInfo-Version": "1.0"
+}

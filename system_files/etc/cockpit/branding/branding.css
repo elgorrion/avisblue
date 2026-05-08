@@ -1,0 +1,23 @@
+/* Avisblue Cockpit branding. Palette: primary #5BA0D9, deep BG #11243B,
+   surface #2A4A6E. Surfaces: login page background, brand header, favicon. */
+
+html body.login-pf {
+    background: #11243B;
+}
+
+:root {
+    --ct-color-host-accent: #2A4A6E;
+    --pf-t--global--color--brand--default: #5BA0D9;
+}
+
+#brand::before {
+    content: "Avisblue";
+    font-size: 2em;
+    font-weight: 300;
+    color: #5BA0D9;
+}
+
+.login-pf-page-header img {
+    content: url("brand.svg");
+    max-height: 80px;
+}

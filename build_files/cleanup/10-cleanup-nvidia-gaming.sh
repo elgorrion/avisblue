@@ -20,7 +20,7 @@
 # What gets added back later:
 #   - kde-apps.sh: konsole, kate, okular, gwenview, ark, kcalc, spectacle, partitionmanager, kdeconnectd
 #   - dev-tools.sh: code, podman-docker, podman-compose, qemu-kvm, libvirt, cockpit-machines, cockpit-ostree
-#   - gaming.sh: openrgb, openrgb-udev-rules (Flatpaks via fleet-packages post-boot)
+#   - gaming.sh: openrgb, openrgb-udev-rules (Flatpaks installed first-boot by avisblue-flatpak-manager.service)
 #
 # CUDA tooling is NOT added: bazzite-nvidia-open already ships
 # nvidia-container-toolkit + ublue-nvctk-cdi.service. CUDA SDKs live in workload
@@ -197,7 +197,7 @@ CLI_TOOLS=(
 
 #################################################
 # SECTION 2: FLATPAKS TO REMOVE
-# NOTE: Flatpaks (ProtonUp-Qt, ScopeBuddy) installed post-boot via fleet-packages
+# NOTE: Flatpaks (ProtonUp-Qt, ScopeBuddy) installed first-boot by avisblue-flatpak-manager.service
 #################################################
 
 GTK_FLATPAKS=(

@@ -1,0 +1,26 @@
+# Quiet-boot kernel args for cleaner pre-Plymouth phase.
+#
+# Format verified against bootc upstream docs (2026-05-09):
+# https://bootc-dev.github.io/bootc/building/kernel-arguments.html
+# `kargs = [...]` array; bootc applies the diff to /boot/loader/entries on
+# image upgrade, preserving any machine-local kargs.
+#
+# Why these args:
+#   loglevel=3                  hide INFO/NOTICE kernel messages on console
+#                               (KERN_ERR and above still print)
+#   vt.global_cursor_default=0  hide the blinking tty cursor before plymouth
+#                               attaches — eliminates the "gray screen with
+#                               square dots" flash Q observed on enviada-nb
+#                               between simpledrm registration and plymouth-
+#                               start (~1 s window where kernel boot text
+#                               renders directly on the firmware framebuffer).
+#   udev.log_level=3            silence noisy udev rule processing
+#
+# Inherited from upstream: rhgb (rhgb=enable plymouth) + quiet remain on
+# cmdline via grub default; we only ADD here.
+
+kargs = [
+    "loglevel=3",
+    "vt.global_cursor_default=0",
+    "udev.log_level=3",
+]

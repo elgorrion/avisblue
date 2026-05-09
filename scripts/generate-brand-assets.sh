@@ -81,14 +81,23 @@ PT_DIR="$OUT/usr/share/plymouth/themes/avisblue"
 mkdir -p "$PT_DIR"
 rsvg-convert -w 600 "$SRC_LIGHT" -o "$PT_DIR/watermark.png"
 
-# Spinner frames — recolour stock greyscale frames (Fedora plymouth-theme-spinner,
+# Throbber frames — recolour stock greyscale frames (Fedora plymouth-theme-spinner,
 # GPL-2.0-or-later) to brand-blue gradient via level-colors remap:
 #   pure-black input -> deep BG #11243B, pure-white input -> primary #5BA0D9.
+#
+# Emit as `throbber-NNNN.png` (NOT `animation-NNNN.png`). Plymouth's two-step
+# plugin (verified upstream `src/plugins/splash/two-step/plugin.c:252`) loads
+# the continuous-spin throbber from prefix `throbber-`; prefix `animation-` is
+# only consulted when `UseEndAnimation=true` for end-of-boot transitions, which
+# our theme disables (matches Bazzite's spinner). Stock files in spinner-stock/
+# keep their `animation-*` source name (that's what Fedora ships); we transform
+# the basename on emit.
 SPINNER_STOCK="${REPO_ROOT}/brand/source/spinner-stock"
 for f in "$SPINNER_STOCK"/animation-*.png; do
     [[ -f "$f" ]] || { echo "ERROR: missing spinner stock $f" >&2; exit 1; }
     base=$(basename "$f")
-    magick "$f" +level-colors '#11243B,#5BA0D9' "$PT_DIR/$base"
+    out="${base/animation-/throbber-}"
+    magick "$f" +level-colors '#11243B,#5BA0D9' "$PT_DIR/$out"
 done
 
 # Stash mirror of fedora-logos-clobbered paths.

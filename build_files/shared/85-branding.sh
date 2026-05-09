@@ -73,7 +73,28 @@ case "${IMAGE_NAME:?IMAGE_NAME must be set}" in
         ;;
 esac
 
-# 4. Regenerate initramfs at the bootc-canonical path
+# 4. Plymouth theme activation via the canonical Fedora tool.
+#
+#    `plymouth-set-default-theme avisblue` (verified against upstream
+#    plymouth/scripts/plymouth-set-default-theme.in, 2026-05-09):
+#      a. validates /usr/share/plymouth/themes/avisblue/avisblue.plymouth exists
+#         AND that the ModuleName plugin (.so) exists on disk — fails loud if
+#         either is missing (matches RULE 0 / infra-discipline "one clean path")
+#      b. removes the stale /usr/share/plymouth/themes/default.plymouth symlink
+#         and recreates it pointing at our theme — keeps `plymouth-set-default-
+#         theme` (no-arg query) consistent with /etc/plymouth/plymouthd.conf
+#      c. re-asserts `Theme=avisblue` under [Daemon] in plymouthd.conf via
+#         INI mutation — preserves our other keys (ShowDelay, DeviceTimeout,
+#         UseSimpledrmNoLuks) shipped in system_files/etc/plymouth/plymouthd.conf
+#
+#    We do NOT pass `--rebuild-initrd` here: that wrapper invokes `dracut -f`
+#    with default flags, which writes to /boot/initramfs-<KVER>.img — bootc
+#    ignores that path. We do the regen explicitly below at the bootc-canonical
+#    /usr/lib/modules/<KVER>/initramfs.img location.
+echo "Activating Plymouth avisblue theme via plymouth-set-default-theme..."
+plymouth-set-default-theme avisblue
+
+# 5. Regenerate initramfs at the bootc-canonical path
 #    /usr/lib/modules/<KVER>/initramfs.img — matching ublue-os/bazzite's
 #    build_files/build-initramfs script (verified upstream 2026-05-08).
 #

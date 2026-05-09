@@ -57,8 +57,8 @@ run_inside() {
         /etc/plymouth/plymouthd.conf
         /usr/share/plymouth/themes/avisblue/avisblue.plymouth
         /usr/share/plymouth/themes/avisblue/watermark.png
-        /usr/share/plymouth/themes/avisblue/animation-0001.png
-        /usr/share/plymouth/themes/avisblue/animation-0036.png
+        /usr/share/plymouth/themes/avisblue/throbber-0001.png
+        /usr/share/plymouth/themes/avisblue/throbber-0036.png
         # Pixmaps + hicolor icons
         /usr/share/pixmaps/avisblue-logo.svg
         /usr/share/pixmaps/system-logo-white.png
@@ -135,14 +135,17 @@ run_inside() {
     echo "OK: ${#pairs[@]} stash-restore pairs match bit-for-bit"
 
     # ----- Plymouth frame count -------------------------------------------
+    # Frames are named `throbber-*.png` (continuous spin) per plymouth two-step
+    # plugin contract — not `animation-*` (which is end-animation only and gated
+    # on UseEndAnimation=true, off for our boot-up/shutdown/reboot sections).
     local frames
     frames=$(find /usr/share/plymouth/themes/avisblue/ -maxdepth 1 \
-        -name 'animation-*.png' -type f | wc -l)
+        -name 'throbber-*.png' -type f | wc -l)
     if [[ "$frames" != "36" ]]; then
-        echo "FAIL: expected 36 Plymouth avisblue frames, found $frames" >&2
+        echo "FAIL: expected 36 Plymouth avisblue throbber frames, found $frames" >&2
         exit 1
     fi
-    echo "OK: 36 Plymouth avisblue frames"
+    echo "OK: 36 Plymouth avisblue throbber frames"
 
     # ----- Plymouth active theme -----------------------------------------
     # Bootscreen Q-bug: stock bgrt theme uses ACPI BGRT firmware logo as

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 10-trim.sh — minimal trim of the Aurora-dx base (VISION §0, §9).
 #
-# This is the FIRST build step, shared by both flavors (avisblue-main on
+# This is the FIRST build step, shared by both flavors (avisblue on
 # aurora-dx, avisblue-nvidia on aurora-dx-nvidia-open).
 #
 # PHILOSOPHY: Avisblue 2.x builds *up* from a clean developer desktop instead

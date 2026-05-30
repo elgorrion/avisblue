@@ -37,7 +37,9 @@ images):
 
 1. **Daily driver** — KDE Plasma 6, Wayland, a curated Qt app set, a browser.
 2. **Development** — Python and TypeScript first; containers, virtualization,
-   and an editor inherited from Aurora-dx; polyglot toolchains via `mise`.
+   and an editor inherited from Aurora-dx; language toolchains provisioned
+   per-user via Homebrew (and devcontainers/distrobox per project) — never baked
+   into the image.
 3. **Gaming** — Steam, delivered as a Flatpak, with MangoHud + Gamescope +
    ProtonUp-Qt. Works on AMD/Intel and NVIDIA alike.
 
@@ -47,7 +49,7 @@ images):
 
 | Image | Base | Hardware |
 |-------|------|----------|
-| `avisblue-main`   | `ghcr.io/ublue-os/aurora-dx:stable`             | AMD / Intel (Mesa) |
+| `avisblue`        | `ghcr.io/ublue-os/aurora-dx:stable`             | AMD / Intel (Mesa) |
 | `avisblue-nvidia` | `ghcr.io/ublue-os/aurora-dx-nvidia-open:stable` | NVIDIA (open modules) |
 
 Aurora-dx gives us, **for free**, what 1.x reassembled by hand:
@@ -72,6 +74,32 @@ tuning for a dramatically simpler, sturdier image. (If a dedicated gaming rig
 ever needs Bazzite, it can run stock Bazzite — Avisblue doesn't have to be
 everything.)
 
+### Relationship to Aurora: derivative, not a hard fork
+
+Avisblue is a **downstream derivative image** — it does `FROM
+ghcr.io/ublue-os/aurora-dx:stable` and layers a thin set of changes on top. This
+is the standard Universal Blue custom-image pattern (cf. the ublue
+`image-template`); it is **not** a source fork of Aurora's repository.
+
+This is deliberate, and it's the right answer for a project that exists for both
+**learning** and **daily use**:
+
+- **Learning surface where it matters, inheritance where it doesn't.** We own the
+  Containerfile, the build layer, CI, signing, branding, and ISO pipeline — the
+  parts worth understanding. We inherit the hard, thankless parts (kernel +
+  akmods, NVIDIA module builds, Secure Boot keys, KDE integration, security
+  updates) from Aurora, which has a team maintaining them.
+- **A hard fork would be a maintenance sink with little upside:** we'd inherit
+  all of Aurora's churn with none of its leverage, for a one-person fleet.
+- **Daily-use reliability:** tracking `aurora-dx:stable` means Avisblue gets the
+  same battle-tested base millions of hours of ublue testing already cover; our
+  thin layer is the only thing that can break, and the smoke-test + auto-revert
+  gates (§8) contain that.
+
+If Avisblue's layer ever grows large enough to feel like its own distro, the
+escape hatch is to vendor specific Aurora build steps — but only the ones we
+genuinely need to diverge on. Default: stay a thin derivative.
+
 ---
 
 ## §3 — The layer we add (and nothing more)
@@ -86,13 +114,13 @@ sensibly live in user space:
 3. **Curated Qt apps** — the KDE app set we always want present (kate, okular,
    gwenview, ark, kcalc, spectacle, partitionmanager, kdeconnectd, konsole) +
    Chromium.
-4. **`mise`** — the one developer tool we bake system-wide (§4).
-5. **Cockpit fleet extensions** — `cockpit-machines`, `cockpit-ostree`.
-6. **First-boot Flatpaks** — the Steam/gaming set, installed idempotently by
+4. **Cockpit fleet extensions** — `cockpit-machines`, `cockpit-ostree`.
+5. **First-boot Flatpaks** — the Steam/gaming set, installed idempotently by
    `avisblue-flatpak-manager` (§5).
-7. **Signing** — cosign policy for `ghcr.io/elgorrion` (§8).
+6. **Signing** — cosign policy for `ghcr.io/elgorrion` (§8).
 
-Everything else stays out of the image on purpose (§4).
+We bake **no developer runtimes and no `mise`** — toolchains are a per-user
+concern (§4). Everything not listed above stays out of the image on purpose.
 
 ---
 
@@ -103,17 +131,20 @@ project dependencies, and most apps do **not** belong baked into the OS.
 
 | Concern | Lives in | Not in the image |
 |---------|----------|------------------|
-| Python / Node / TS toolchains | **`mise`** (per-user, declarative `mise.toml`) | layered RPM `python3.x`, `nodejs` |
+| Python / Node / TS toolchains | **Homebrew** (per-user; `brew install python node`, or `brew install mise` if you want polyglot pinning) | layered RPM `python3.x`, `nodejs`, or a baked `mise` |
 | Project environments | **devcontainers / distrobox** (Aurora-dx ships both) | global venvs |
 | GUI apps | **Flatpak** (Flathub) | layered desktop RPMs |
 | CLI tools | **Homebrew** | layered RPMs |
 | Dotfiles / config | **chezmoi** | `/etc` edits |
 | GPU compute (CUDA / ROCm / PyTorch) | **workload containers** | host SDKs |
 
-`mise` is the single exception we bake system-wide: it is one static binary, it
-manages everything in `$HOME`, and it is the "futuristic" polyglot manager that
-makes Python+TS development turnkey on a fresh machine. Bootstrapping the fleet
-is then: `mise use -g python node`, `chezmoi init --apply`, done.
+The image bakes **no language runtimes and no version manager** — not even
+`mise`. Toolchains are per-user state, and per-user state belongs in `$HOME`, not
+in the OS layer. Homebrew (inherited from Aurora-dx) is the fleet's runtime
+delivery mechanism; chezmoi-managed dotfiles can `brew install` whatever a given
+machine needs. Bootstrapping a fresh machine is: `brew install …`,
+`chezmoi init --apply`, done. (Prefer per-project isolation? Use a devcontainer
+or distrobox — both ship in the base.)
 
 ---
 

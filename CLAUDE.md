@@ -8,15 +8,15 @@ flavors. **Read [VISION.md](VISION.md) first — it's the constitution.**
 
 Avisblue 2.x builds **up** from a clean KDE developer desktop (Aurora-dx); it no
 longer strips **down** a gaming OS (Bazzite). The image is minimal; mutable
-concerns live elsewhere (VISION §4): language toolchains in `mise`, project
-envs in devcontainers/distrobox, GUI apps in Flatpak, CLI in Homebrew, dotfiles
-in chezmoi, GPU compute in workload containers.
+concerns live elsewhere (VISION §4): language toolchains via Homebrew (per-user,
+not baked), project envs in devcontainers/distrobox, GUI apps in Flatpak, CLI in
+Homebrew, dotfiles in chezmoi, GPU compute in workload containers.
 
 ## Images
 
 | Image | Base | Hardware |
 |-------|------|----------|
-| `avisblue-main`   | `ghcr.io/ublue-os/aurora-dx:stable`             | AMD / Intel (Mesa) |
+| `avisblue`        | `ghcr.io/ublue-os/aurora-dx:stable`             | AMD / Intel (Mesa) |
 | `avisblue-nvidia` | `ghcr.io/ublue-os/aurora-dx-nvidia-open:stable` | NVIDIA (open modules) |
 
 The two images differ **only** by GPU (VISION §9.7). Daily-driver apps, the dev
@@ -28,8 +28,9 @@ Homebrew, Tailscale, Flatpak+Flathub, `ublue-update`. On `-nvidia`: open kernel
 modules + `nvidia-container-toolkit` + auto-CDI.
 
 **Avisblue adds (the thin layer):** identity/branding, fleet config, curated Qt
-apps + Chromium, `mise`, Cockpit fleet extensions, first-boot gaming Flatpaks,
-cosign signing policy.
+apps + Chromium, Cockpit fleet extensions, first-boot gaming Flatpaks, cosign
+signing policy. **No baked language runtimes / `mise`** — toolchains are
+per-user via Homebrew (VISION §4).
 
 **GPU compute (VISION §9.5):** host exposes hardware; SDKs (CUDA, ROCm, PyTorch)
 live in workload containers — `podman run --device nvidia.com/gpu=all …` on
@@ -39,7 +40,7 @@ NVIDIA; `--device /dev/kfd --device /dev/dri` into `rocm/pytorch` on AMD.
 
 ```bash
 # Local build
-podman build -f Containerfile.main -t avisblue-main:local .
+podman build -f Containerfile -t avisblue:local .
 podman build -f Containerfile.nvidia -t avisblue-nvidia:local .
 # or: just build-all
 
@@ -65,14 +66,14 @@ gh run list --repo elgorrion/avisblue
 
 ```
 VISION.md                       # The constitution — read first
-Containerfile.main              # Aurora-dx (AMD/Intel)
-Containerfile.nvidia            # Aurora-dx NVIDIA (open)
+Containerfile                   # Aurora-dx (AMD/Intel) — base image: avisblue
+Containerfile.nvidia            # Aurora-dx NVIDIA (open) — avisblue-nvidia
 build_files/shared/
 ├── 10-trim.sh                  # Minimal, lenient trim of the Aurora-dx base
 ├── 20-fleet-config.sh          # Locale, SSH, Tailscale, shell skel
 ├── 25-wayland-only.sh          # Remove X11 sessions, Wayland-only
 ├── 30-kde-apps.sh              # Curated KDE RPMs + Chromium
-├── 40-dev-tools.sh             # mise + Cockpit fleet extensions
+├── 40-dev-tools.sh             # Cockpit fleet extensions (dev substrate is inherited)
 ├── 80-avisblue.sh              # Identity, signing-policy merge, service enable
 ├── 85-branding.sh              # Logos neutralization, Plymouth, variant patch
 └── 90-finalize.sh              # Validation, telemetry mask, cleanup
@@ -105,7 +106,7 @@ Images are cosign-signed (key at `/etc/pki/containers/avisblue.pub`);
 
 ```bash
 # AMD/Intel GPU
-sudo bootc switch --enforce-container-sigpolicy ghcr.io/elgorrion/avisblue-main:latest
+sudo bootc switch --enforce-container-sigpolicy ghcr.io/elgorrion/avisblue:latest
 
 # NVIDIA GPU
 sudo bootc switch --enforce-container-sigpolicy ghcr.io/elgorrion/avisblue-nvidia:latest

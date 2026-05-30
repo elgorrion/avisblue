@@ -12,7 +12,7 @@ flavors.
 
 | Image | Base | Hardware |
 |-------|------|----------|
-| `avisblue-main`   | `aurora-dx:stable`             | AMD / Intel (Mesa) |
+| `avisblue`        | `aurora-dx:stable`             | AMD / Intel (Mesa) |
 | `avisblue-nvidia` | `aurora-dx-nvidia-open:stable` | NVIDIA (open kernel modules) |
 
 The images differ **only** by GPU. Everything else — desktop, dev layer, and
@@ -35,7 +35,7 @@ doesn't verify against that key.
 
 ```bash
 # AMD/Intel GPU
-sudo bootc switch --enforce-container-sigpolicy ghcr.io/elgorrion/avisblue-main:latest
+sudo bootc switch --enforce-container-sigpolicy ghcr.io/elgorrion/avisblue:latest
 
 # NVIDIA GPU
 sudo bootc switch --enforce-container-sigpolicy ghcr.io/elgorrion/avisblue-nvidia:latest
@@ -47,15 +47,17 @@ sudo bootc switch --enforce-container-sigpolicy ghcr.io/elgorrion/avisblue-nvidi
 # 1. Join the fleet network
 sudo tailscale up --accept-routes --operator=$USER
 
-# 2. Set up development toolchains with mise (baked into the image)
-mise use -g python node          # Python + Node/TypeScript, per-user in $HOME
-
-# 3. CLI tools via Homebrew (inherited from Aurora-dx)
+# 2. CLI tools + dev runtimes via Homebrew (inherited from Aurora-dx)
 brew install chezmoi starship direnv bat eza fd ripgrep git-delta gh fzf
+brew install python node          # or: brew install mise  (per-user toolchains)
 
-# 4. Apply dotfiles
+# 3. Apply dotfiles
 chezmoi init --apply --ssh <your-github-username>
 ```
+
+Language runtimes are intentionally **not** baked into the image — they're
+per-user state (see [VISION.md](VISION.md) §4). Use Homebrew for global tools, or
+a devcontainer/distrobox (both ship in the base) for per-project isolation.
 
 Steam and the gaming Flatpaks install automatically on first boot — just launch
 Steam from the menu.
@@ -73,7 +75,6 @@ open NVIDIA kernel modules + `nvidia-container-toolkit` + auto-CDI.
 
 | Category | What |
 |----------|------|
-| Dev | **`mise`** (polyglot runtime manager for Python/TS/etc.) |
 | Fleet | Cockpit extensions (`cockpit-machines`, `cockpit-ostree`), Tailscale + locale config |
 | Apps | Curated KDE set (kate, okular, gwenview, ark, kcalc, spectacle, partitionmanager, kdeconnectd, konsole) + Chromium |
 | Gaming | Steam + MangoHud + Gamescope + ProtonUp-Qt, **as Flatpaks**, installed first-boot |
@@ -83,7 +84,7 @@ open NVIDIA kernel modules + `nvidia-container-toolkit` + auto-CDI.
 
 Avisblue keeps the image minimal. Mutable, fast-moving things live outside it:
 
-- **Language toolchains** → `mise` (per-user, declarative `mise.toml`)
+- **Language toolchains** → Homebrew (per-user; `mise` optional via `brew`)
 - **Project environments** → devcontainers / distrobox
 - **GUI apps** → Flatpak (Flathub)
 - **CLI tools** → Homebrew
@@ -93,8 +94,8 @@ Avisblue keeps the image minimal. Mutable, fast-moving things live outside it:
 ## Building Locally
 
 ```bash
-just build-main      # podman build -f Containerfile.main   -t avisblue-main:local .
-just build-nvidia    # podman build -f Containerfile.nvidia -t avisblue-nvidia:local .
+just build           # podman build -f Containerfile         -t avisblue:local .
+just build-nvidia    # podman build -f Containerfile.nvidia  -t avisblue-nvidia:local .
 just build-all
 ```
 
@@ -102,7 +103,7 @@ just build-all
 
 ```
 Aurora-dx (Universal Blue, KDE developer workstation)
-├── avisblue-main    ← aurora-dx:stable
+├── avisblue         ← aurora-dx:stable
 └── avisblue-nvidia  ← aurora-dx-nvidia-open:stable
         │
         └── shared thin layer:
@@ -110,7 +111,7 @@ Aurora-dx (Universal Blue, KDE developer workstation)
             ├── 20-fleet       locale + Tailscale + SSH + shell skel
             ├── 25-wayland     Wayland-only
             ├── 30-kde-apps    curated Qt apps + Chromium
-            ├── 40-dev-tools   mise + Cockpit fleet extensions
+            ├── 40-dev-tools   Cockpit fleet extensions
             ├── 80-avisblue    identity + signing policy + services
             ├── 85-branding    logos + Plymouth + variant
             └── 90-finalize    validation + telemetry mask

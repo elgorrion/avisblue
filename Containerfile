@@ -1,4 +1,4 @@
-# avisblue-main: Aurora-dx (AMD/Intel, Mesa) for the personal fleet.
+# avisblue: Aurora-dx (AMD/Intel, Mesa) for the personal fleet — the base image.
 # Built UP from Universal Blue's KDE developer workstation, not stripped DOWN
 # from a gaming OS. See VISION.md §0, §2.
 #
@@ -12,7 +12,7 @@ COPY build_files /build_files
 
 FROM ${BASE_IMAGE}
 
-ARG IMAGE_NAME="avisblue-main"
+ARG IMAGE_NAME="avisblue"
 ARG IMAGE_VENDOR="elgorrion"
 ARG BUILD_DATE="unknown"
 ARG BUILD_ID="unknown"
@@ -44,7 +44,7 @@ RUN --mount=type=bind,from=ctx,src=/build_files,dst=/ctx/build_files \
     --mount=type=cache,dst=/var/log \
     /ctx/build_files/shared/30-kde-apps.sh
 
-# 40. Dev tools: mise + Cockpit fleet extensions (Aurora-dx ships the rest)
+# 40. Cockpit fleet extensions (Aurora-dx ships the dev substrate; runtimes via brew)
 RUN --mount=type=bind,from=ctx,src=/build_files,dst=/ctx/build_files \
     --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
@@ -77,4 +77,4 @@ RUN --mount=type=tmpfs,target=/run --network=none bootc container lint
 # Image metadata
 LABEL org.opencontainers.image.title="${IMAGE_NAME}"
 LABEL org.opencontainers.image.vendor="${IMAGE_VENDOR}"
-LABEL org.opencontainers.image.description="Avisblue main - Aurora-dx (AMD/Intel, Mesa); daily + dev + Steam; GPU compute via containers"
+LABEL org.opencontainers.image.description="Avisblue - Aurora-dx (AMD/Intel, Mesa); daily + dev + Steam; GPU compute via containers"

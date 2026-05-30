@@ -25,7 +25,7 @@ echo "=============================================="
 
 # Derive flavor + variant from image name
 case "$IMAGE_NAME" in
-    avisblue-main)
+    avisblue)
         FLAVOR="main"
         VARIANT="Main"
         BASE_IMAGE_NAME="aurora-dx"

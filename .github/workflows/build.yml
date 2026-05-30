@@ -46,8 +46,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - image: avisblue-main
-            containerfile: Containerfile.main
+          - image: avisblue
+            containerfile: Containerfile
             base: ghcr.io/ublue-os/aurora-dx:stable
             variant: Main
           - image: avisblue-nvidia
@@ -156,7 +156,7 @@ jobs:
         run: |
           # cosign v2 default uploads to Rekor; --tlog-upload=false keeps the
           # signature offline (Avisblue ships no Rekor reference).
-          for image in avisblue-main avisblue-nvidia; do
+          for image in avisblue avisblue-nvidia; do
             cosign sign --key env://COSIGN_PRIVATE_KEY --yes \
               --tlog-upload=false \
               "${REGISTRY}/${image}:latest"
@@ -177,7 +177,7 @@ jobs:
           SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          for image in avisblue-main avisblue-nvidia; do
+          for image in avisblue avisblue-nvidia; do
             LATEST="${REGISTRY}/${image}:latest"
             SHA_REF="${REGISTRY}/${image}:${SHA}"
 
@@ -256,7 +256,7 @@ jobs:
           # single-platform digest, so wrapping breaks bootc's sig lookup
           # (the c5993b0-class regression). skopeo copies the manifest verbatim
           # to the new tag, so :latest's digest matches the signed digest.
-          for image in avisblue-main avisblue-nvidia; do
+          for image in avisblue avisblue-nvidia; do
             echo "Retagging ${image}: ${GREEN} -> latest"
             skopeo copy --quiet \
               "docker://${REGISTRY}/${image}:${GREEN}" \

@@ -23,8 +23,8 @@
 #       Not meant to be invoked directly; use the launcher form.
 #
 # Args:
-#   IMAGE_REF   e.g. ghcr.io/elgorrion/avisblue-main@sha256:...
-#               or  ghcr.io/elgorrion/avisblue-main:abc1234
+#   IMAGE_REF   e.g. ghcr.io/elgorrion/avisblue@sha256:...
+#               or  ghcr.io/elgorrion/avisblue:abc1234
 #   VARIANT     "Main" | "NVIDIA"  (must match Variant= in
 #               /etc/xdg/kcm-about-distrorc inside the image)
 

@@ -295,6 +295,59 @@ jobs:
             esac
           done
 
+      # Phase G — G2b: exercise the CONSUMER path the fleet actually uses.
+      # G2's `cosign verify` is producer-side; bootc/podman gate pulls on the
+      # containers-image signature policy (policy.json + sigstore attachments),
+      # which is what `bootc switch --enforce-container-sigpolicy` enforces. Build
+      # that exact policy here — default reject, require a sigstoreSigned
+      # signature from cosign.pub for ghcr.io/elgorrion (mirrors the policy.json
+      # 80-avisblue.sh bakes into the image) — and pull every signed tag through
+      # it. Fails if the published artifact wouldn't satisfy the fleet's enforced
+      # policy, catching sign/attachment regressions cosign verify can miss.
+      - name: Enforce signature policy (consumer pull path)
+        env:
+          REGISTRY: ${{ env.IMAGE_REGISTRY }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          keypath="${PWD}/cosign.pub"
+
+          # registries.d: read cosign's registry-stored sigstore attachments
+          # (the `sha256-<digest>.sig` artifacts) for our registry, exactly as
+          # the fleet's /etc/containers/registries.d/elgorrion.yaml does.
+          mkdir -p /tmp/sigtest/regd
+          cat > /tmp/sigtest/regd/elgorrion.yaml <<EOF
+          docker:
+            ${REGISTRY}:
+              use-sigstore-attachments: true
+          EOF
+
+          # policy: deny by default; only accept images signed by our key.
+          cat > /tmp/sigtest/policy.json <<EOF
+          {
+            "default": [{"type": "reject"}],
+            "transports": {
+              "docker": {
+                "${REGISTRY}": [{"type": "sigstoreSigned", "keyPath": "${keypath}"}]
+              }
+            }
+          }
+          EOF
+
+          for image in avisblue avisblue-nvidia; do
+            for ref in latest "${SHA}"; do
+              echo "Enforcing sigpolicy on pull: ${image}:${ref}"
+              # `skopeo copy --policy` evaluates the policy against the SOURCE; a
+              # signature that doesn't satisfy it aborts the copy non-zero.
+              skopeo copy \
+                --policy /tmp/sigtest/policy.json \
+                --registries.d /tmp/sigtest/regd \
+                "docker://${REGISTRY}/${image}:${ref}" \
+                "dir:$(mktemp -d)" >/dev/null
+            done
+          done
+          echo "OK: all signed tags satisfy --enforce-container-sigpolicy (cosign.pub)"
+
   # Phase G — G3: if a scheduled or workflow_dispatch run goes red anywhere
   # in build/sign, retag the previous green SHA as :latest and open a tracking
   # issue. Fleet stays on last-known-good while Q investigates. Deliberately

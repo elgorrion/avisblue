@@ -1,115 +1,143 @@
 # Avisblue
 
-Custom [Universal Blue](https://universal-blue.org/) distro based on [Bazzite](https://bazzite.gg/).
+A clean [Universal Blue](https://universal-blue.org/) distro based on
+[Aurora-dx](https://getaurora.dev/), for a small personal fleet — daily driver,
+development (Python / TypeScript), and gaming (Steam), on one image and two GPU
+flavors.
+
+> **Philosophy:** build *up* from a clean KDE developer desktop, don't strip
+> *down* a gaming OS. See [VISION.md](VISION.md) for the full constitution.
 
 ## Images
 
-| Image | Base | Features |
+| Image | Base | Hardware |
 |-------|------|----------|
-| `avisblue-main` | `bazzite:stable` (Mesa) | Dev (host); AMD compute via containers |
-| `avisblue-nvidia-gaming` | `bazzite-nvidia-open:stable` | Gaming + Dev (host); CUDA via containers |
+| `avisblue`        | `aurora-dx:stable`             | AMD / Intel (Mesa) |
+| `avisblue-nvidia` | `aurora-dx-nvidia-open:stable` | NVIDIA (open kernel modules) |
 
-GPU compute is intentionally container-only: the host exposes hardware (kernel modules, container toolkit, auto-CDI), workloads (CUDA, ROCm, PyTorch, etc.) live in containers.
+The images differ **only** by GPU. Everything else — desktop, dev layer, and
+gaming — is identical. GPU *compute* is intentionally container-only: the host
+exposes hardware; CUDA / ROCm / PyTorch live in workload containers.
 
 ## Installation
 
 ### Fresh Install (ISO)
 
-Download ISO from [Releases](https://github.com/elgorrion/avisblue/releases) and install.
+Download an ISO from [Releases](https://github.com/elgorrion/avisblue/releases)
+and install.
 
-### Rebase from Fedora Atomic
+### Rebase from Fedora Atomic / Aurora
 
-Both images are signed with [cosign](https://docs.sigstore.dev/cosign/) using the public key shipped at `/etc/pki/containers/avisblue.pub` inside the image. The `--enforce-container-sigpolicy` flag below makes `bootc` refuse to deploy an image whose signature doesn't verify against that key.
+Both images are signed with [cosign](https://docs.sigstore.dev/cosign/) using
+the public key shipped at `/etc/pki/containers/avisblue.pub` inside the image.
+`--enforce-container-sigpolicy` makes `bootc` refuse any image whose signature
+doesn't verify against that key.
+
+> **Prerequisite (first switch from a foreign host):**
+> `--enforce-container-sigpolicy` enforces the **host's**
+> `/etc/containers/policy.json` — a key that exists only *inside* the target
+> image cannot bootstrap its own trust. On an Avisblue host this is already
+> baked in (installed from our signed ISO), so rebases between Avisblue images
+> just work. Switching from stock Fedora Atomic / Aurora first needs the key +
+> policy on the host:
+>
+> ```bash
+> sudo curl -fsSL --create-dirs -o /etc/pki/containers/avisblue.pub \
+>   https://raw.githubusercontent.com/elgorrion/avisblue/main/system_files/etc/pki/containers/avisblue.pub
+> # then add a sigstoreSigned rule for ghcr.io/elgorrion/avisblue* keyed to that
+> # keyPath in /etc/containers/policy.json — same entry 80-avisblue.sh bakes into
+> # the image (see the "Merging policy.json" step there for the exact JSON).
+> ```
 
 ```bash
-# For AMD/Intel GPU
-sudo bootc switch --enforce-container-sigpolicy ghcr.io/elgorrion/avisblue-main:latest
+# AMD/Intel GPU
+sudo bootc switch --enforce-container-sigpolicy ghcr.io/elgorrion/avisblue:latest
 
-# For NVIDIA GPU + Gaming
-sudo bootc switch --enforce-container-sigpolicy ghcr.io/elgorrion/avisblue-nvidia-gaming:latest
+# NVIDIA GPU
+sudo bootc switch --enforce-container-sigpolicy ghcr.io/elgorrion/avisblue-nvidia:latest
 ```
 
-## Post-Install Setup
+## First-Boot Setup
 
 ```bash
-# 1. Connect to fleet
+# 1. Join the fleet network
 sudo tailscale up --accept-routes --operator=$USER
 
-# 2. Install Homebrew packages
-brew install chezmoi starship direnv
-brew install bat eza fd ripgrep git-delta gh glab fzf
+# 2. CLI tools + dev runtimes via Homebrew (inherited from Aurora-dx)
+brew install chezmoi starship direnv bat eza fd ripgrep git-delta gh fzf
+brew install python node          # or: brew install mise  (per-user toolchains)
 
 # 3. Apply dotfiles
 chezmoi init --apply --ssh <your-github-username>
-
-# 4. Install Claude Code
-curl -fsSL https://claude.ai/install.sh | sh
 ```
+
+Language runtimes are intentionally **not** baked into the image — they're
+per-user state (see [VISION.md](VISION.md) §4). Use Homebrew for global tools, or
+a devcontainer/distrobox (both ship in the base) for per-project isolation.
+
+Steam and the gaming Flatpaks install automatically on first boot — just launch
+Steam from the menu.
 
 ## What's Included
 
-### Both Images
+### Inherited from Aurora-dx (every machine)
 
-| Category | Packages |
-|----------|----------|
-| KDE Apps | kate, okular, gwenview, ark, kcalc, spectacle, partitionmanager, kdeconnectd, konsole, chromium |
-| Dev Tools | VSCode, podman-docker, podman-compose, qemu-kvm, libvirt |
-| Cockpit | cockpit-system, cockpit-podman, cockpit-storaged, cockpit-machines, cockpit-ostree |
-| System | Bazzite kernel (HDR, winesync), Tailscale, Homebrew, Distrobox |
-| Display | Wayland-only (SDDM + kwin_wayland), XWayland for legacy apps |
+KDE Plasma 6 (Wayland), VS Code, Docker **and** Podman, Incus,
+libvirt/virt-manager, Cockpit, distrobox, devcontainers, Homebrew, Tailscale,
+Flatpak + Flathub, automatic updates (`ublue-update`). The `-nvidia` image adds
+open NVIDIA kernel modules + `nvidia-container-toolkit` + auto-CDI.
 
-### avisblue-main (Mesa)
+### Added by Avisblue (the thin layer)
 
-- AMD compute via containers — `amdgpu` kernel module on host; user in `render`+`video` groups; pass `--device /dev/kfd --device /dev/dri` to your workload container (e.g. `docker.io/rocm/pytorch`)
-- No gaming packages (stripped)
-- Zero Flatpaks
+| Category | What |
+|----------|------|
+| Fleet | Cockpit extensions (`cockpit-machines`, `cockpit-ostree`), Tailscale + locale config |
+| Apps | Curated KDE set (kate, okular, gwenview, ark, kcalc, spectacle, partitionmanager, kdeconnectd, konsole) + Chromium |
+| Gaming | Steam + MangoHud + Gamescope + ProtonUp-Qt, **as Flatpaks**, installed first-boot |
+| Identity | Avisblue branding (Plymouth, SDDM, wallpaper, fastfetch, Cockpit) + cosign signing |
 
-### avisblue-nvidia-gaming (NVIDIA, open kernel modules)
+### Where everything else lives
 
-- NVIDIA stack from `bazzite-nvidia-open:stable`: open kernel modules + `nvidia-container-toolkit` + `ublue-nvctk-cdi.service` (auto-generates `/etc/cdi/nvidia.yaml` at boot)
-- GPU in containers: `podman run --rm --device nvidia.com/gpu=all nvcr.io/nvidia/cuda:12.5.0-base-ubi9 nvidia-smi`
-- Gaming: Steam, Gamescope, MangoHud, vkBasalt (from Bazzite)
-- Gaming extras: OpenRGB
-- Flatpaks: ProtonUp-Qt and ScopeBuddy install automatically on first boot via `avisblue-flatpak-manager.service` (idempotent, version-gated). The list lives at `/usr/share/avisblue/flatpaks-nvidia-gaming.list`.
+Avisblue keeps the image minimal. Mutable, fast-moving things live outside it:
+
+- **Language toolchains** → Homebrew (per-user; `mise` optional via `brew`)
+- **Project environments** → devcontainers / distrobox
+- **GUI apps** → Flatpak (Flathub)
+- **CLI tools** → Homebrew
+- **Dotfiles** → chezmoi
+- **GPU compute** → workload containers
 
 ## Building Locally
 
 ```bash
-# Build main
-podman build -f Containerfile.main -t avisblue-main:local .
-
-# Build nvidia-gaming
-podman build -f Containerfile.nvidia-gaming -t avisblue-nvidia-gaming:local .
+just build           # podman build -f Containerfile         -t avisblue:local .
+just build-nvidia    # podman build -f Containerfile.nvidia  -t avisblue-nvidia:local .
+just build-all
 ```
 
 ## Architecture
 
-```
-Bazzite (upstream)
-├── avisblue-main  ← bazzite:stable
-│   ├── Strip gaming/handheld
-│   ├── Strip GTK Flatpaks
-│   ├── Fleet config + Wayland-only
-│   ├── KDE apps (RPMs)
-│   └── Dev tools + Cockpit
-│
-└── avisblue-nvidia-gaming  ← bazzite-nvidia-open:stable
-    ├── Strip handheld (keep gaming)
-    ├── Strip GTK Flatpaks
-    ├── Fleet config + Wayland-only
-    ├── KDE apps (RPMs)
-    ├── Dev tools + Cockpit
-    └── Gaming extras (OpenRGB)
+```text
+Aurora-dx (Universal Blue, KDE developer workstation)
+├── avisblue         ← aurora-dx:stable
+└── avisblue-nvidia  ← aurora-dx-nvidia-open:stable
+        │
+        └── shared thin layer:
+            ├── 10-trim        minimal constitutional trim (lenient)
+            ├── 20-fleet       locale + Tailscale + SSH + shell skel
+            ├── 25-wayland     Wayland-only
+            ├── 30-kde-apps    curated Qt apps + Chromium
+            ├── 40-dev-tools   Cockpit fleet extensions
+            ├── 80-avisblue    identity + signing policy + services
+            ├── 85-branding    logos + Plymouth + variant
+            └── 90-finalize    validation + telemetry mask
 ```
 
 ## Fleet Management
 
-Access Cockpit at `https://machine:9090` for:
-- System monitoring and logs
-- Podman container management
-- VM management (libvirt)
-- rpm-ostree deployments and rollback
-- Storage/Btrfs management
+Cockpit at `https://machine:9090` — system monitoring, Podman containers, VM
+management (libvirt/machines), `rpm-ostree`/bootc deployments + rollback, and
+storage. Machines are reachable over the Tailscale fleet network.
 
 ## License
 

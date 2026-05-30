@@ -1,17 +1,18 @@
-# avisblue-nvidia-gaming: NVIDIA (open) + Gaming + Dev
-# Based on Bazzite-NVIDIA-open, stripped of handheld, with dev tools added.
-# CUDA tooling is container-only: bazzite-nvidia-open already ships
-# nvidia-container-toolkit + ublue-nvctk-cdi.service (auto /etc/cdi/nvidia.yaml).
-# CUDA SDKs / PyTorch / etc. live in workload containers (e.g. nvcr.io/nvidia/pytorch).
+# avisblue: Aurora-dx (AMD/Intel, Mesa) for the personal fleet — the base image.
+# Built UP from Universal Blue's KDE developer workstation, not stripped DOWN
+# from a gaming OS. See VISION.md §0, §2.
+#
+# AMD/Intel compute is container-only: the amdgpu/i915 kernel modules live in
+# the host; compute SDKs (ROCm, oneAPI, PyTorch) live in workload containers.
 
-ARG BASE_IMAGE="ghcr.io/ublue-os/bazzite-nvidia-open:stable"
+ARG BASE_IMAGE="ghcr.io/ublue-os/aurora-dx:stable"
 
 FROM scratch AS ctx
 COPY build_files /build_files
 
 FROM ${BASE_IMAGE}
 
-ARG IMAGE_NAME="avisblue-nvidia-gaming"
+ARG IMAGE_NAME="avisblue"
 ARG IMAGE_VENDOR="elgorrion"
 ARG BUILD_DATE="unknown"
 ARG BUILD_ID="unknown"
@@ -19,11 +20,11 @@ ARG BUILD_ID="unknown"
 # System files go into the real rootfs
 COPY system_files /
 
-# 10. Cleanup: Remove handheld/bloat (keeps gaming packages)
+# 10. Trim: minimal, lenient trim of the Aurora-dx base (constitutional only)
 RUN --mount=type=bind,from=ctx,src=/build_files,dst=/ctx/build_files \
     --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
-    /ctx/build_files/cleanup/10-cleanup-nvidia-gaming.sh
+    /ctx/build_files/shared/10-trim.sh
 
 # 20. Fleet configuration (locale, SSH, Tailscale)
 RUN --mount=type=bind,from=ctx,src=/build_files,dst=/ctx/build_files \
@@ -37,23 +38,17 @@ RUN --mount=type=bind,from=ctx,src=/build_files,dst=/ctx/build_files \
     --mount=type=cache,dst=/var/log \
     /ctx/build_files/shared/25-wayland-only.sh
 
-# 30. Install KDE apps (RPMs)
+# 30. Install curated KDE apps (RPMs)
 RUN --mount=type=bind,from=ctx,src=/build_files,dst=/ctx/build_files \
     --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     /ctx/build_files/shared/30-kde-apps.sh
 
-# 40. Install dev tools (VSCode, podman, libvirt)
+# 40. Cockpit fleet extensions (Aurora-dx ships the dev substrate; runtimes via brew)
 RUN --mount=type=bind,from=ctx,src=/build_files,dst=/ctx/build_files \
     --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     /ctx/build_files/shared/40-dev-tools.sh
-
-# 50. Install gaming extras (OpenRGB only; Flatpaks installed first-boot by avisblue-flatpak-manager.service)
-RUN --mount=type=bind,from=ctx,src=/build_files,dst=/ctx/build_files \
-    --mount=type=cache,dst=/var/cache \
-    --mount=type=cache,dst=/var/log \
-    /ctx/build_files/roles/50-gaming.sh
 
 # 80. Avisblue identity + signing setup + service enablement
 RUN --mount=type=bind,from=ctx,src=/build_files,dst=/ctx/build_files \
@@ -63,7 +58,7 @@ RUN --mount=type=bind,from=ctx,src=/build_files,dst=/ctx/build_files \
     BUILD_DATE=${BUILD_DATE} BUILD_ID=${BUILD_ID} \
     /ctx/build_files/shared/80-avisblue.sh
 
-# 85. Branding runtime swaps (fedora-logos -> generic-logos; NVIDIA Variant patch)
+# 85. Branding runtime swaps (logos neutralization; Plymouth; variant patch)
 RUN --mount=type=bind,from=ctx,src=/build_files,dst=/ctx/build_files \
     --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
@@ -82,4 +77,4 @@ RUN --mount=type=tmpfs,target=/run --network=none bootc container lint
 # Image metadata
 LABEL org.opencontainers.image.title="${IMAGE_NAME}"
 LABEL org.opencontainers.image.vendor="${IMAGE_VENDOR}"
-LABEL org.opencontainers.image.description="Avisblue nvidia-gaming - NVIDIA (open) + Gaming + Dev (host); CUDA via containers"
+LABEL org.opencontainers.image.description="Avisblue - Aurora-dx (AMD/Intel, Mesa); daily + dev + Steam; GPU compute via containers"

@@ -2,7 +2,7 @@ name: Release Avisblue ISOs
 
 on:
   schedule:
-    # Mondays 08:00 UTC — after upstream Bazzite (Mon 04:40) and our daily image (06:00)
+    # Mondays 08:00 UTC — after upstream Aurora-dx and our daily image (06:00)
     - cron: "0 8 * * 1"
   workflow_dispatch:
 
@@ -26,8 +26,8 @@ jobs:
       fail-fast: false
       matrix:
         image:
-          - avisblue-main
-          - avisblue-nvidia-gaming
+          - avisblue
+          - avisblue-nvidia
     steps:
       - name: Free disk space
         run: |
@@ -78,7 +78,7 @@ jobs:
 
       # Pinned to cosign-installer v3.10.1 (= cosign v2.6.1) to match
       # build.yml. v3.x output format breaks bootc-side sig verification
-      # (Bazzite containers-image still on legacy schema). See sign-step
+      # (Fedora 44 base containers-image still on legacy schema). See sign-step
       # comment in build.yml for full rationale.
       - name: Install cosign
         uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5  # v3.10.1

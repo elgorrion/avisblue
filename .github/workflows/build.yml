@@ -2,9 +2,19 @@ name: Build Avisblue Images
 
 on:
   schedule:
-    # Daily 06:00 UTC — picks up Bazzite upstream rebuild (Mon 04:40 UTC) same-day
+    # Daily 06:00 UTC — picks up Aurora-dx upstream rebuild same-day
     - cron: "0 6 * * *"
   workflow_dispatch:
+  # Validate every PR by actually building + smoke-testing both images. PR runs
+  # push ONLY the :<sha> tag (never :latest) and skip sign/verify/revert, so the
+  # fleet — which follows :latest — is never affected by an unmerged branch.
+  pull_request:
+
+# Cancel superseded PR builds (rapid review-fix pushes) to save runner minutes;
+# never cancel scheduled/dispatch prod builds.
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   IMAGE_REGISTRY: ghcr.io/${{ github.repository_owner }}
@@ -46,14 +56,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - image: avisblue-main
-            containerfile: Containerfile.main
-            base: ghcr.io/ublue-os/bazzite:stable
+          - image: avisblue
+            containerfile: Containerfile
+            base: ghcr.io/ublue-os/aurora-dx:stable
             variant: Main
-          - image: avisblue-nvidia-gaming
-            containerfile: Containerfile.nvidia-gaming
-            base: ghcr.io/ublue-os/bazzite-nvidia-open:stable
-            variant: NVIDIA Gaming
+          - image: avisblue-nvidia
+            containerfile: Containerfile.nvidia
+            base: ghcr.io/ublue-os/aurora-dx-nvidia-open:stable
+            variant: NVIDIA
     steps:
       - name: Free disk space
         run: |
@@ -81,12 +91,42 @@ jobs:
         id: date
         run: echo "date=$(date -u +%Y%m%d)" >> "$GITHUB_OUTPUT"
 
+      # Tag set differs by trigger: prod builds (schedule/dispatch) move :latest
+      # AND pin :<sha>; PR builds push ONLY :<sha> so the fleet's :latest pointer
+      # is never touched by an unmerged branch. The smoke test pulls :<sha> in
+      # both cases, so PRs get the identical end-to-end validation minus signing.
+      - name: Compute image tags
+        id: tags
+        env:
+          REG: ${{ env.IMAGE_REGISTRY }}
+          IMG: ${{ matrix.image }}
+          SHA: ${{ github.sha }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          {
+            echo "tags<<EOF"
+            echo "${REG}/${IMG}:${SHA}"
+            if [[ "$EVENT" != "pull_request" ]]; then
+              echo "${REG}/${IMG}:latest"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Build and push ${{ matrix.image }}
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f  # v7.1.0
         with:
           context: .
           file: ${{ matrix.containerfile }}
-          push: true
+          # Push with OCI media types (not the default docker v2s2 manifest).
+          # The Aurora-dx base ships zstd-compressed layers; under a docker v2s2
+          # manifest buildx labels them `application/vnd.docker.image.rootfs.diff
+          # .tar.zstd` — an invalid combo (docker schema2 has no zstd) that
+          # podman/skopeo (the smoke test) and bootc both reject with
+          # "unsupported docker v2s2 media type". oci-mediatypes=true relabels
+          # them as valid OCI zstd layers, pullable everywhere, with no costly
+          # recompression of the multi-GB base. Stays single-platform, so the
+          # sign/verify index guard (G2) still holds.
+          outputs: type=image,oci-mediatypes=true,push=true
           # buildx defaults attach provenance + sbom, converting push into a
           # multi-arch index. cosign then signs the index digest, but bootc
           # looks up sig by platform-manifest digest -> mismatch -> pull fails
@@ -94,9 +134,7 @@ jobs:
           # VISION §8: no supply-chain scanners for a single-owner derivative.
           provenance: false
           sbom: false
-          tags: |
-            ${{ env.IMAGE_REGISTRY }}/${{ matrix.image }}:latest
-            ${{ env.IMAGE_REGISTRY }}/${{ matrix.image }}:${{ github.sha }}
+          tags: ${{ steps.tags.outputs.tags }}
           build-args: |
             BASE_IMAGE=${{ matrix.base }}
             BUILD_DATE=${{ steps.date.outputs.date }}
@@ -114,10 +152,63 @@ jobs:
           VARIANT: ${{ matrix.variant }}
         run: bash scripts/smoke-test.sh "$IMAGE_REF" "$VARIANT"
 
+  # On a PR build failure, surface the failed job's logs back onto the PR as a
+  # comment. The runner can read Actions logs (api.github.com); the maintainer's
+  # tooling reaches GitHub only through a proxy that doesn't expose run logs, so
+  # this is how a red PR build becomes diagnosable. Prod failures use the
+  # auto-revert + tracking-issue path instead, so this is PR-only.
+  diagnose:
+    needs: build
+    if: failure() && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: write
+    steps:
+      - name: Post failed build logs to the PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          # Fetch per-job logs (not `gh run view --log-failed`, which refuses
+          # while the run is still in progress — diagnose itself is running).
+          ids=$(gh api "repos/${REPO}/actions/runs/${RUN_ID}/jobs" --paginate \
+            --jq '.jobs[] | select(.conclusion=="failure") | .id')
+          : > /tmp/failed.log
+          for id in $ids; do
+            name=$(gh api "repos/${REPO}/actions/jobs/${id}" --jq '.name')
+            {
+              echo "===================================================="
+              echo "JOB ${id}: ${name}"
+              echo "===================================================="
+            } >> /tmp/failed.log
+            gh api "repos/${REPO}/actions/jobs/${id}/logs" >> /tmp/failed.log 2>&1 \
+              || echo "(could not fetch logs for job ${id})" >> /tmp/failed.log
+          done
+          # GitHub comment cap is 65536 chars; keep the tail (the error) and
+          # strip timestamp prefixes to save room.
+          sed -E 's/^[0-9TZ:.+-]+ //' /tmp/failed.log | tail -c 58000 > /tmp/failed.tail
+          {
+            echo "### 🔴 PR build failed — captured logs (run ${RUN_ID})"
+            echo ""
+            echo "_Auto-posted by the \`diagnose\` job so the failure is readable. Tail of the failed job log:_"
+            echo ""
+            echo '```text'
+            cat /tmp/failed.tail
+            echo '```'
+          } > /tmp/comment.md
+          gh pr comment "${PR}" --repo "${REPO}" --body-file /tmp/comment.md
+
   sign:
     runs-on: ubuntu-latest
     needs: build
-    # Always sign (schedule and workflow_dispatch both push)
+    # Sign + ship only for prod builds. PR validation builds push :<sha> for the
+    # smoke test but are never signed (and the fleet never pulls them), so skip.
+    if: github.event_name != 'pull_request'
     permissions:
       contents: read
       packages: write
@@ -137,7 +228,7 @@ jobs:
       # because cosign v3 default `--registry-referrers-mode=oci-1-1` writes
       # the new `application/vnd.dev.sigstore.bundle.v0.3+json` referrer
       # artifact at tag `sha256-DIGEST` (no `.sig` suffix), which the
-      # Bazzite-shipped containers-image (Fedora 44, containers-common 0.67,
+      # base-shipped containers-image (Fedora 44, containers-common 0.67,
       # bootc 1.15.1) cannot verify — `bootc upgrade` fails fleet-wide with
       # "A signature was required, but no signature exists". The v3 opt-out
       # flags `--registry-referrers-mode=legacy` and `--use-signing-config=false`
@@ -156,7 +247,7 @@ jobs:
         run: |
           # cosign v2 default uploads to Rekor; --tlog-upload=false keeps the
           # signature offline (Avisblue ships no Rekor reference).
-          for image in avisblue-main avisblue-nvidia-gaming; do
+          for image in avisblue avisblue-nvidia; do
             cosign sign --key env://COSIGN_PRIVATE_KEY --yes \
               --tlog-upload=false \
               "${REGISTRY}/${image}:latest"
@@ -177,7 +268,7 @@ jobs:
           SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          for image in avisblue-main avisblue-nvidia-gaming; do
+          for image in avisblue avisblue-nvidia; do
             LATEST="${REGISTRY}/${image}:latest"
             SHA_REF="${REGISTRY}/${image}:${SHA}"
 
@@ -203,6 +294,59 @@ jobs:
                 exit 1 ;;
             esac
           done
+
+      # Phase G — G2b: exercise the CONSUMER path the fleet actually uses.
+      # G2's `cosign verify` is producer-side; bootc/podman gate pulls on the
+      # containers-image signature policy (policy.json + sigstore attachments),
+      # which is what `bootc switch --enforce-container-sigpolicy` enforces. Build
+      # that exact policy here — default reject, require a sigstoreSigned
+      # signature from cosign.pub for ghcr.io/elgorrion (mirrors the policy.json
+      # 80-avisblue.sh bakes into the image) — and pull every signed tag through
+      # it. Fails if the published artifact wouldn't satisfy the fleet's enforced
+      # policy, catching sign/attachment regressions cosign verify can miss.
+      - name: Enforce signature policy (consumer pull path)
+        env:
+          REGISTRY: ${{ env.IMAGE_REGISTRY }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          keypath="${PWD}/cosign.pub"
+
+          # registries.d: read cosign's registry-stored sigstore attachments
+          # (the `sha256-<digest>.sig` artifacts) for our registry, exactly as
+          # the fleet's /etc/containers/registries.d/elgorrion.yaml does.
+          mkdir -p /tmp/sigtest/regd
+          cat > /tmp/sigtest/regd/elgorrion.yaml <<EOF
+          docker:
+            ${REGISTRY}:
+              use-sigstore-attachments: true
+          EOF
+
+          # policy: deny by default; only accept images signed by our key.
+          cat > /tmp/sigtest/policy.json <<EOF
+          {
+            "default": [{"type": "reject"}],
+            "transports": {
+              "docker": {
+                "${REGISTRY}": [{"type": "sigstoreSigned", "keyPath": "${keypath}"}]
+              }
+            }
+          }
+          EOF
+
+          for image in avisblue avisblue-nvidia; do
+            for ref in latest "${SHA}"; do
+              echo "Enforcing sigpolicy on pull: ${image}:${ref}"
+              # `skopeo copy --policy` evaluates the policy against the SOURCE; a
+              # signature that doesn't satisfy it aborts the copy non-zero.
+              skopeo copy \
+                --policy /tmp/sigtest/policy.json \
+                --registries.d /tmp/sigtest/regd \
+                "docker://${REGISTRY}/${image}:${ref}" \
+                "dir:$(mktemp -d)" >/dev/null
+            done
+          done
+          echo "OK: all signed tags satisfy --enforce-container-sigpolicy (cosign.pub)"
 
   # Phase G — G3: if a scheduled or workflow_dispatch run goes red anywhere
   # in build/sign, retag the previous green SHA as :latest and open a tracking
@@ -256,7 +400,7 @@ jobs:
           # single-platform digest, so wrapping breaks bootc's sig lookup
           # (the c5993b0-class regression). skopeo copies the manifest verbatim
           # to the new tag, so :latest's digest matches the signed digest.
-          for image in avisblue-main avisblue-nvidia-gaming; do
+          for image in avisblue avisblue-nvidia; do
             echo "Retagging ${image}: ${GREEN} -> latest"
             skopeo copy --quiet \
               "docker://${REGISTRY}/${image}:${GREEN}" \

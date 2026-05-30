@@ -13,8 +13,9 @@ if ! rpm -qa > /dev/null 2>&1; then
     exit 1
 fi
 
-# Verify critical packages still present and not corrupted
-# Note: Only check packages in base Bazzite, not ones we add (like konsole)
+# Verify critical packages still present and not corrupted.
+# plasma-desktop/kwin/systemd come from the Aurora-dx base; kate is added in
+# 30-kde-apps.sh (which runs before this) — all must be present at finalize.
 CRITICAL_PACKAGES=(plasma-desktop kwin kate systemd)
 for pkg in "${CRITICAL_PACKAGES[@]}"; do
     if ! rpm -q "$pkg" > /dev/null 2>&1; then
@@ -35,19 +36,29 @@ for pkg in "${CRITICAL_PACKAGES[@]}"; do
 done
 echo "Package database valid, critical packages present"
 
-# Mask Bazzite's inherited rpm-ostree-countme units (VISION §4#3: no telemetry,
-# even opt-in). Bazzite ships rpm-ostree-countme.timer enabled by default; it
-# triggers `rpm-ostree countme` on a 3-day cycle, which phones home to Fedora's
-# mirror infra to count active deployments. Bluefin keeps this on (community
+# Mask the inherited rpm-ostree-countme units (VISION §9.1: no telemetry, even
+# opt-in). The Fedora-derived base ships rpm-ostree-countme.timer; it triggers
+# `rpm-ostree countme` on a 3-day cycle, which phones home to Fedora's mirror
+# infra to count active deployments. Aurora/Bluefin keep this on (community
 # count badge); Avisblue diverges constitutionally. Mask (not just disable) so
 # the units cannot be started manually either.
 #
-# Audit 2026-05-04 (against bazzite:stable + bazzite-nvidia-open:stable):
-#   - rpm-ostree-countme.timer/service: ENABLED — masked here
-#   - kde-inotify-survey: NOT telemetry (KDE inotify-limit notifier)
-#   - dnf countme=: not set in /etc/dnf/dnf.conf (default off)
+# Lenient on absence (a future base may drop the units), strict on everything
+# else: only skip when the units genuinely aren't shipped — a real `mask`
+# failure (read-only /etc, broken systemctl) must still fail the build, or we'd
+# ship with telemetry silently re-enabled.
 echo "Masking rpm-ostree-countme units (constitutional: no telemetry)..."
-systemctl mask rpm-ostree-countme.timer rpm-ostree-countme.service
+countme_units=()
+for unit in rpm-ostree-countme.timer rpm-ostree-countme.service; do
+    if [[ -e "/usr/lib/systemd/system/${unit}" || -e "/etc/systemd/system/${unit}" ]]; then
+        countme_units+=("${unit}")
+    fi
+done
+if (( ${#countme_units[@]} > 0 )); then
+    systemctl mask "${countme_units[@]}"
+else
+    echo "rpm-ostree-countme units not present; skipping mask."
+fi
 
 # Clean package caches
 echo "Cleaning package caches..."

@@ -5,6 +5,16 @@ on:
     # Daily 06:00 UTC — picks up Aurora-dx upstream rebuild same-day
     - cron: "0 6 * * *"
   workflow_dispatch:
+  # Validate every PR by actually building + smoke-testing both images. PR runs
+  # push ONLY the :<sha> tag (never :latest) and skip sign/verify/revert, so the
+  # fleet — which follows :latest — is never affected by an unmerged branch.
+  pull_request:
+
+# Cancel superseded PR builds (rapid review-fix pushes) to save runner minutes;
+# never cancel scheduled/dispatch prod builds.
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   IMAGE_REGISTRY: ghcr.io/${{ github.repository_owner }}
@@ -81,6 +91,27 @@ jobs:
         id: date
         run: echo "date=$(date -u +%Y%m%d)" >> "$GITHUB_OUTPUT"
 
+      # Tag set differs by trigger: prod builds (schedule/dispatch) move :latest
+      # AND pin :<sha>; PR builds push ONLY :<sha> so the fleet's :latest pointer
+      # is never touched by an unmerged branch. The smoke test pulls :<sha> in
+      # both cases, so PRs get the identical end-to-end validation minus signing.
+      - name: Compute image tags
+        id: tags
+        env:
+          REG: ${{ env.IMAGE_REGISTRY }}
+          IMG: ${{ matrix.image }}
+          SHA: ${{ github.sha }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          {
+            echo "tags<<EOF"
+            echo "${REG}/${IMG}:${SHA}"
+            if [[ "$EVENT" != "pull_request" ]]; then
+              echo "${REG}/${IMG}:latest"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Build and push ${{ matrix.image }}
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f  # v7.1.0
         with:
@@ -94,9 +125,7 @@ jobs:
           # VISION §8: no supply-chain scanners for a single-owner derivative.
           provenance: false
           sbom: false
-          tags: |
-            ${{ env.IMAGE_REGISTRY }}/${{ matrix.image }}:latest
-            ${{ env.IMAGE_REGISTRY }}/${{ matrix.image }}:${{ github.sha }}
+          tags: ${{ steps.tags.outputs.tags }}
           build-args: |
             BASE_IMAGE=${{ matrix.base }}
             BUILD_DATE=${{ steps.date.outputs.date }}
@@ -117,7 +146,9 @@ jobs:
   sign:
     runs-on: ubuntu-latest
     needs: build
-    # Always sign (schedule and workflow_dispatch both push)
+    # Sign + ship only for prod builds. PR validation builds push :<sha> for the
+    # smoke test but are never signed (and the fleet never pulls them), so skip.
+    if: github.event_name != 'pull_request'
     permissions:
       contents: read
       packages: write

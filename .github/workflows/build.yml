@@ -143,6 +143,57 @@ jobs:
           VARIANT: ${{ matrix.variant }}
         run: bash scripts/smoke-test.sh "$IMAGE_REF" "$VARIANT"
 
+  # On a PR build failure, surface the failed job's logs back onto the PR as a
+  # comment. The runner can read Actions logs (api.github.com); the maintainer's
+  # tooling reaches GitHub only through a proxy that doesn't expose run logs, so
+  # this is how a red PR build becomes diagnosable. Prod failures use the
+  # auto-revert + tracking-issue path instead, so this is PR-only.
+  diagnose:
+    needs: build
+    if: failure() && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: write
+    steps:
+      - name: Post failed build logs to the PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          # Fetch per-job logs (not `gh run view --log-failed`, which refuses
+          # while the run is still in progress — diagnose itself is running).
+          ids=$(gh api "repos/${REPO}/actions/runs/${RUN_ID}/jobs" --paginate \
+            --jq '.jobs[] | select(.conclusion=="failure") | .id')
+          : > /tmp/failed.log
+          for id in $ids; do
+            name=$(gh api "repos/${REPO}/actions/jobs/${id}" --jq '.name')
+            {
+              echo "===================================================="
+              echo "JOB ${id}: ${name}"
+              echo "===================================================="
+            } >> /tmp/failed.log
+            gh api "repos/${REPO}/actions/jobs/${id}/logs" >> /tmp/failed.log 2>&1 \
+              || echo "(could not fetch logs for job ${id})" >> /tmp/failed.log
+          done
+          # GitHub comment cap is 65536 chars; keep the tail (the error) and
+          # strip timestamp prefixes to save room.
+          sed -E 's/^[0-9TZ:.+-]+ //' /tmp/failed.log | tail -c 58000 > /tmp/failed.tail
+          {
+            echo "### 🔴 PR build failed — captured logs (run ${RUN_ID})"
+            echo ""
+            echo "_Auto-posted by the \`diagnose\` job so the failure is readable. Tail of the failed job log:_"
+            echo ""
+            echo '```text'
+            cat /tmp/failed.tail
+            echo '```'
+          } > /tmp/comment.md
+          gh pr comment "${PR}" --repo "${REPO}" --body-file /tmp/comment.md
+
   sign:
     runs-on: ubuntu-latest
     needs: build

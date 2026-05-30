@@ -117,7 +117,16 @@ jobs:
         with:
           context: .
           file: ${{ matrix.containerfile }}
-          push: true
+          # Push with OCI media types (not the default docker v2s2 manifest).
+          # The Aurora-dx base ships zstd-compressed layers; under a docker v2s2
+          # manifest buildx labels them `application/vnd.docker.image.rootfs.diff
+          # .tar.zstd` — an invalid combo (docker schema2 has no zstd) that
+          # podman/skopeo (the smoke test) and bootc both reject with
+          # "unsupported docker v2s2 media type". oci-mediatypes=true relabels
+          # them as valid OCI zstd layers, pullable everywhere, with no costly
+          # recompression of the multi-GB base. Stays single-platform, so the
+          # sign/verify index guard (G2) still holds.
+          outputs: type=image,oci-mediatypes=true,push=true
           # buildx defaults attach provenance + sbom, converting push into a
           # multi-arch index. cosign then signs the index digest, but bootc
           # looks up sig by platform-manifest digest -> mismatch -> pull fails

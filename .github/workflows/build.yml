@@ -2,7 +2,7 @@ name: Build Avisblue Images
 
 on:
   schedule:
-    # Daily 06:00 UTC — picks up Bazzite upstream rebuild (Mon 04:40 UTC) same-day
+    # Daily 06:00 UTC — picks up Aurora-dx upstream rebuild same-day
     - cron: "0 6 * * *"
   workflow_dispatch:
 
@@ -48,12 +48,12 @@ jobs:
         include:
           - image: avisblue-main
             containerfile: Containerfile.main
-            base: ghcr.io/ublue-os/bazzite:stable
+            base: ghcr.io/ublue-os/aurora-dx:stable
             variant: Main
-          - image: avisblue-nvidia-gaming
-            containerfile: Containerfile.nvidia-gaming
-            base: ghcr.io/ublue-os/bazzite-nvidia-open:stable
-            variant: NVIDIA Gaming
+          - image: avisblue-nvidia
+            containerfile: Containerfile.nvidia
+            base: ghcr.io/ublue-os/aurora-dx-nvidia-open:stable
+            variant: NVIDIA
     steps:
       - name: Free disk space
         run: |
@@ -137,7 +137,7 @@ jobs:
       # because cosign v3 default `--registry-referrers-mode=oci-1-1` writes
       # the new `application/vnd.dev.sigstore.bundle.v0.3+json` referrer
       # artifact at tag `sha256-DIGEST` (no `.sig` suffix), which the
-      # Bazzite-shipped containers-image (Fedora 44, containers-common 0.67,
+      # base-shipped containers-image (Fedora 44, containers-common 0.67,
       # bootc 1.15.1) cannot verify — `bootc upgrade` fails fleet-wide with
       # "A signature was required, but no signature exists". The v3 opt-out
       # flags `--registry-referrers-mode=legacy` and `--use-signing-config=false`
@@ -156,7 +156,7 @@ jobs:
         run: |
           # cosign v2 default uploads to Rekor; --tlog-upload=false keeps the
           # signature offline (Avisblue ships no Rekor reference).
-          for image in avisblue-main avisblue-nvidia-gaming; do
+          for image in avisblue-main avisblue-nvidia; do
             cosign sign --key env://COSIGN_PRIVATE_KEY --yes \
               --tlog-upload=false \
               "${REGISTRY}/${image}:latest"
@@ -177,7 +177,7 @@ jobs:
           SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
-          for image in avisblue-main avisblue-nvidia-gaming; do
+          for image in avisblue-main avisblue-nvidia; do
             LATEST="${REGISTRY}/${image}:latest"
             SHA_REF="${REGISTRY}/${image}:${SHA}"
 
@@ -256,7 +256,7 @@ jobs:
           # single-platform digest, so wrapping breaks bootc's sig lookup
           # (the c5993b0-class regression). skopeo copies the manifest verbatim
           # to the new tag, so :latest's digest matches the signed digest.
-          for image in avisblue-main avisblue-nvidia-gaming; do
+          for image in avisblue-main avisblue-nvidia; do
             echo "Retagging ${image}: ${GREEN} -> latest"
             skopeo copy --quiet \
               "docker://${REGISTRY}/${image}:${GREEN}" \

@@ -1,9 +1,9 @@
-# Avisblue main (AMD/Intel) — first-boot Flatpaks installed by
+# Avisblue nvidia (NVIDIA open) — first-boot Flatpaks installed by
 # avisblue-flatpak-manager (idempotent; version-hash gated).
 #
 # Gaming is universal across the fleet (VISION §5): Steam ships as a Flatpak,
-# not an RPM stack, and is identical on main and nvidia. AMD/Intel get Mesa
-# acceleration from the base image.
+# not an RPM stack, and is identical on main and nvidia. NVIDIA gets working
+# acceleration from the open kernel modules in the base image.
 #
 # Modify this list and rebuild to change the first-boot Flatpak set.
 

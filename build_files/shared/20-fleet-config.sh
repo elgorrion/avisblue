@@ -31,7 +31,7 @@ LC_ADDRESS=C
 LC_TELEPHONE=C
 EOF
 
-# Ensure Tailscale is enabled (already installed in Bazzite)
+# Ensure Tailscale is enabled (installed in the Aurora-dx base)
 echo "Enabling Tailscale..."
 systemctl enable tailscaled.service || true
 

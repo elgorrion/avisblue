@@ -18,7 +18,7 @@
 #      uncontested path — no RPM owns it, no stash needed.)
 #
 #   3. NVIDIA variant differentiation: kcm-about-distrorc ships with
-#      Variant=Main; the NVIDIA image needs Variant=NVIDIA Gaming.
+#      Variant=Main; the NVIDIA image needs Variant=NVIDIA.
 #
 #   4. dracut --regenerate-all -f --no-hostonly. Bakes the avisblue Plymouth
 #      theme + plymouthd.conf (Theme=avisblue) into the image's initramfs so
@@ -30,17 +30,25 @@ set -euo pipefail
 
 echo "=== 85-branding: applying runtime branding mutations ==="
 
-# 1. fedora-logos -> generic-logos swap
-echo "Swapping fedora-logos for generic-logos..."
-dnf5 -y swap fedora-logos generic-logos
-rpm --erase --nodeps --nodb generic-logos
+# 1. Neutralize the base image's logos package so its Fedora/Aurora-branded
+#    files don't sit on disk under RPM ownership. generic-logos Provides
+#    fedora-logos, so swapping satisfies the dependency graph; erasing it
+#    --nodeps --nodb then removes the files while keeping the rpmdb happy.
+#    Aurora-dx (like Bazzite) ships fedora-logos (VISION §6). Guard the swap so
+#    a future base that renames/drops the logos package can't hard-fail here —
+#    our COPYed branding still wins on disk regardless.
+if rpm -q fedora-logos >/dev/null 2>&1; then
+    echo "Swapping fedora-logos for generic-logos..."
+    dnf5 -y swap fedora-logos generic-logos
+    rpm --erase --nodeps --nodb generic-logos
+else
+    echo "fedora-logos not installed; relying on COPYed branding (no swap needed)."
+fi
 
-# 2. Restore branded files at the paths the swap (or earlier cleanup-main) clobbered
+# 2. Restore branded files at the paths the swap may have clobbered. Idempotent
+#    if no swap ran (re-asserts the bytes COPYed from system_files).
 echo "Restoring branded files from /usr/share/avisblue/branding-stash/ ..."
 STASH=/usr/share/avisblue/branding-stash
-# /etc/xdg/kdeglobals is owned by steamdeck-kde-presets-desktop on the
-# bazzite:stable base; cleanup-main removes that package and the file with it.
-# nvidia-gaming keeps the package, so the restore is a no-op on that variant.
 for rel in \
     usr/share/pixmaps/fedora-logo.png \
     usr/share/pixmaps/fedora-logo-small.png \
@@ -60,9 +68,9 @@ done
 
 # 3. NVIDIA variant differentiation
 case "${IMAGE_NAME:?IMAGE_NAME must be set}" in
-    *nvidia-gaming)
+    *nvidia)
         echo "Patching kcm-about-distrorc Variant for NVIDIA image..."
-        sed -i 's|^Variant=.*|Variant=NVIDIA Gaming|' /etc/xdg/kcm-about-distrorc
+        sed -i 's|^Variant=.*|Variant=NVIDIA|' /etc/xdg/kcm-about-distrorc
         ;;
     *main)
         echo "Main variant: leaving kcm-about-distrorc Variant=Main"

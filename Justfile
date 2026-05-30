@@ -1,20 +1,20 @@
-# Avisblue - Custom Universal Blue distro based on Bazzite
+# Avisblue - Clean Universal Blue distro based on Aurora-dx
 # Local build commands
 
 # Default recipe
 default:
     @just --list
 
-# Build avisblue-main (Mesa + Dev + ROCm)
+# Build avisblue-main (Aurora-dx, AMD/Intel)
 build-main:
     podman build -f Containerfile.main -t avisblue-main:local .
 
-# Build avisblue-nvidia-gaming (NVIDIA + Gaming + Dev + CUDA)
-build-nvidia-gaming:
-    podman build -f Containerfile.nvidia-gaming -t avisblue-nvidia-gaming:local .
+# Build avisblue-nvidia (Aurora-dx NVIDIA open)
+build-nvidia:
+    podman build -f Containerfile.nvidia -t avisblue-nvidia:local .
 
 # Build all images
-build-all: build-main build-nvidia-gaming
+build-all: build-main build-nvidia
     @echo "All images built successfully"
 
 # List local avisblue images

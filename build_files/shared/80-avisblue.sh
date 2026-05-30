@@ -6,7 +6,7 @@
 #   1. Patch /usr/lib/os-release with Avisblue identity (KEEPS ID=fedora)
 #   2. Write /etc/system-release
 #   3. Write /usr/share/ublue-os/image-info.json
-#   4. Merge our entry into Bazzite's /usr/etc/containers/policy.json
+#   4. Merge our entry into the base image's /usr/etc/containers/policy.json
 #   5. Enable avisblue-flatpak-manager.service
 
 set -euo pipefail
@@ -28,12 +28,12 @@ case "$IMAGE_NAME" in
     avisblue-main)
         FLAVOR="main"
         VARIANT="Main"
-        BASE_IMAGE_NAME="bazzite"
+        BASE_IMAGE_NAME="aurora-dx"
         ;;
-    avisblue-nvidia-gaming)
-        FLAVOR="nvidia-gaming"
-        VARIANT="NVIDIA Gaming"
-        BASE_IMAGE_NAME="bazzite-nvidia-open"
+    avisblue-nvidia)
+        FLAVOR="nvidia"
+        VARIANT="NVIDIA"
+        BASE_IMAGE_NAME="aurora-dx-nvidia-open"
         ;;
     *)
         echo "ERROR: Unknown IMAGE_NAME: $IMAGE_NAME" >&2
@@ -136,7 +136,7 @@ EOF
 
 echo "--- Merging policy.json ---"
 
-# jq is required; install if Bazzite doesn't ship it
+# jq is required; install if the base doesn't ship it
 if ! command -v jq >/dev/null 2>&1; then
     echo "jq not found; installing..."
     dnf5 -y install jq

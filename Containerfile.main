@@ -1,9 +1,11 @@
-# avisblue-main: Mesa + Dev
-# Based on Bazzite, stripped of gaming/handheld, with dev tools added.
-# AMD compute (ROCm) is container-only: amdgpu kernel module is in the host;
-# rocm-hip / rocm-opencl / etc. live in workload containers (e.g. rocm/pytorch).
+# avisblue-main: Aurora-dx (AMD/Intel, Mesa) for the personal fleet.
+# Built UP from Universal Blue's KDE developer workstation, not stripped DOWN
+# from a gaming OS. See VISION.md §0, §2.
+#
+# AMD/Intel compute is container-only: the amdgpu/i915 kernel modules live in
+# the host; compute SDKs (ROCm, oneAPI, PyTorch) live in workload containers.
 
-ARG BASE_IMAGE="ghcr.io/ublue-os/bazzite:stable"
+ARG BASE_IMAGE="ghcr.io/ublue-os/aurora-dx:stable"
 
 FROM scratch AS ctx
 COPY build_files /build_files
@@ -18,11 +20,11 @@ ARG BUILD_ID="unknown"
 # System files go into the real rootfs
 COPY system_files /
 
-# 10. Cleanup: Remove all unnecessary packages (gaming, handheld, bloat)
+# 10. Trim: minimal, lenient trim of the Aurora-dx base (constitutional only)
 RUN --mount=type=bind,from=ctx,src=/build_files,dst=/ctx/build_files \
     --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
-    /ctx/build_files/cleanup/10-cleanup-main.sh
+    /ctx/build_files/shared/10-trim.sh
 
 # 20. Fleet configuration (locale, SSH, Tailscale)
 RUN --mount=type=bind,from=ctx,src=/build_files,dst=/ctx/build_files \
@@ -36,13 +38,13 @@ RUN --mount=type=bind,from=ctx,src=/build_files,dst=/ctx/build_files \
     --mount=type=cache,dst=/var/log \
     /ctx/build_files/shared/25-wayland-only.sh
 
-# 30. Install KDE apps (RPMs)
+# 30. Install curated KDE apps (RPMs)
 RUN --mount=type=bind,from=ctx,src=/build_files,dst=/ctx/build_files \
     --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
     /ctx/build_files/shared/30-kde-apps.sh
 
-# 40. Install dev tools (VSCode, podman, libvirt)
+# 40. Dev tools: mise + Cockpit fleet extensions (Aurora-dx ships the rest)
 RUN --mount=type=bind,from=ctx,src=/build_files,dst=/ctx/build_files \
     --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
@@ -56,7 +58,7 @@ RUN --mount=type=bind,from=ctx,src=/build_files,dst=/ctx/build_files \
     BUILD_DATE=${BUILD_DATE} BUILD_ID=${BUILD_ID} \
     /ctx/build_files/shared/80-avisblue.sh
 
-# 85. Branding runtime swaps (fedora-logos -> generic-logos; NVIDIA Variant patch)
+# 85. Branding runtime swaps (logos neutralization; Plymouth; variant patch)
 RUN --mount=type=bind,from=ctx,src=/build_files,dst=/ctx/build_files \
     --mount=type=cache,dst=/var/cache \
     --mount=type=cache,dst=/var/log \
@@ -75,4 +77,4 @@ RUN --mount=type=tmpfs,target=/run --network=none bootc container lint
 # Image metadata
 LABEL org.opencontainers.image.title="${IMAGE_NAME}"
 LABEL org.opencontainers.image.vendor="${IMAGE_VENDOR}"
-LABEL org.opencontainers.image.description="Avisblue main - Mesa + Dev (host); AMD compute via containers"
+LABEL org.opencontainers.image.description="Avisblue main - Aurora-dx (AMD/Intel, Mesa); daily + dev + Steam; GPU compute via containers"

@@ -67,12 +67,15 @@ do
 done
 
 # 3. NVIDIA variant differentiation
+# Match the NVIDIA image first (avisblue-nvidia), then the base image
+# (avisblue). The base dropped its "-main" suffix in 2.x, so don't pattern on
+# *main any more — match the exact base name and keep refusing the unknown.
 case "${IMAGE_NAME:?IMAGE_NAME must be set}" in
     *nvidia)
         echo "Patching kcm-about-distrorc Variant for NVIDIA image..."
         sed -i 's|^Variant=.*|Variant=NVIDIA|' /etc/xdg/kcm-about-distrorc
         ;;
-    *main)
+    avisblue)
         echo "Main variant: leaving kcm-about-distrorc Variant=Main"
         ;;
     *)

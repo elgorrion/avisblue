@@ -150,8 +150,8 @@ or distrobox — both ship in the base.)
 
 ## §5 — Gaming is a Flatpak, and it's universal
 
-Gaming is **not** a separate image and **not** an RPM stack. Both `main` and
-`nvidia` install the same first-boot Flatpak set:
+Gaming is **not** a separate image and **not** an RPM stack. Both `avisblue` and
+`avisblue-nvidia` install the same first-boot Flatpak set:
 
 - `com.valvesoftware.Steam`
 - `com.valvesoftware.Steam.Utility.MangoHud`

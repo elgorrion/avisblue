@@ -41,10 +41,24 @@ echo "Package database valid, critical packages present"
 # `rpm-ostree countme` on a 3-day cycle, which phones home to Fedora's mirror
 # infra to count active deployments. Aurora/Bluefin keep this on (community
 # count badge); Avisblue diverges constitutionally. Mask (not just disable) so
-# the units cannot be started manually either. `|| true`: don't fail the build
-# if a future base drops the units entirely.
+# the units cannot be started manually either.
+#
+# Lenient on absence (a future base may drop the units), strict on everything
+# else: only skip when the units genuinely aren't shipped — a real `mask`
+# failure (read-only /etc, broken systemctl) must still fail the build, or we'd
+# ship with telemetry silently re-enabled.
 echo "Masking rpm-ostree-countme units (constitutional: no telemetry)..."
-systemctl mask rpm-ostree-countme.timer rpm-ostree-countme.service || true
+countme_units=()
+for unit in rpm-ostree-countme.timer rpm-ostree-countme.service; do
+    if [[ -e "/usr/lib/systemd/system/${unit}" || -e "/etc/systemd/system/${unit}" ]]; then
+        countme_units+=("${unit}")
+    fi
+done
+if (( ${#countme_units[@]} > 0 )); then
+    systemctl mask "${countme_units[@]}"
+else
+    echo "rpm-ostree-countme units not present; skipping mask."
+fi
 
 # Clean package caches
 echo "Cleaning package caches..."

@@ -64,7 +64,7 @@ gh run list --repo elgorrion/avisblue
 
 ## File Structure
 
-```
+```text
 VISION.md                       # The constitution — read first
 Containerfile                   # Aurora-dx (AMD/Intel) — base image: avisblue
 Containerfile.nvidia            # Aurora-dx NVIDIA (open) — avisblue-nvidia

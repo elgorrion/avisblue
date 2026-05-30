@@ -33,6 +33,22 @@ the public key shipped at `/etc/pki/containers/avisblue.pub` inside the image.
 `--enforce-container-sigpolicy` makes `bootc` refuse any image whose signature
 doesn't verify against that key.
 
+> **Prerequisite (first switch from a foreign host):**
+> `--enforce-container-sigpolicy` enforces the **host's**
+> `/etc/containers/policy.json` — a key that exists only *inside* the target
+> image cannot bootstrap its own trust. On an Avisblue host this is already
+> baked in (installed from our signed ISO), so rebases between Avisblue images
+> just work. Switching from stock Fedora Atomic / Aurora first needs the key +
+> policy on the host:
+>
+> ```bash
+> sudo curl -fsSL --create-dirs -o /etc/pki/containers/avisblue.pub \
+>   https://raw.githubusercontent.com/elgorrion/avisblue/main/system_files/etc/pki/containers/avisblue.pub
+> # then add a sigstoreSigned rule for ghcr.io/elgorrion/avisblue* keyed to that
+> # keyPath in /etc/containers/policy.json — same entry 80-avisblue.sh bakes into
+> # the image (see the "Merging policy.json" step there for the exact JSON).
+> ```
+
 ```bash
 # AMD/Intel GPU
 sudo bootc switch --enforce-container-sigpolicy ghcr.io/elgorrion/avisblue:latest
@@ -101,7 +117,7 @@ just build-all
 
 ## Architecture
 
-```
+```text
 Aurora-dx (Universal Blue, KDE developer workstation)
 ├── avisblue         ← aurora-dx:stable
 └── avisblue-nvidia  ← aurora-dx-nvidia-open:stable
